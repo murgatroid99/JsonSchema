@@ -1,6 +1,6 @@
 <?php
 /**
- * $this->php
+ * Uri.php
  * 
  * @fileOverview An RFC 3986 compliant, scheme extendable URI parsing/validating/resolving library for PHP.
  * @author Gregory Beaver greg@chiaraquartet.net
