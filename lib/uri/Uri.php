@@ -588,66 +588,69 @@ class Uri
      * @returns {URIComponents}
      */
     
-    URI.resolveComponents = function (base, relative, options, skipNormalization) {
-        var target = new URIComponents();
+    function resolveComponents(Components $base, Components $relative, Options $options = null, $skipNormalization = false)
+    {
+        $target = new Components();
         
-        if (!skipNormalization) {
-            base = URI.parse(URI.serialize(base, options), options);  //normalize base components
-            relative = URI.parse(URI.serialize(relative, options), options);  //normalize relative components
+        if (!$skipNormalization) {
+            $base = $this->parse($this->serialize($base, $options), $options);  //normalize base components
+            $relative = $this->parse($this->serialize($relative, $options), $options);  //normalize relative components
         }
-        options = options || {};
+        if (null === $options) {
+            $options = $this->options;
+        }
         
-        if (!options.tolerant && relative.scheme) {
-            target.scheme = relative.scheme;
-            target.authority = relative.authority;
-            target.userinfo = relative.userinfo;
-            target.host = relative.host;
-            target.port = relative.port;
-            target.path = URI.removeDotSegments(relative.path);
-            target.query = relative.query;
+        if (!$options->tolerant && $relative->scheme) {
+            $target->scheme = $relative->scheme;
+            $target->authority = $relative->authority;
+            $target->userinfo = $relative->userinfo;
+            $target->host = $relative->host;
+            $target->port = $relative->port;
+            $target->path = $this->removeDotSegments($relative->path);
+            $target->query = $relative->query;
         } else {
-            if (relative.authority !== null) {
-                target.authority = relative.authority;
-                target.userinfo = relative.userinfo;
-                target.host = relative.host;
-                target.port = relative.port;
-                target.path = URI.removeDotSegments(relative.path);
-                target.query = relative.query;
+            if ($relative->authority !== null) {
+                $target->authority = $relative->authority;
+                $target->userinfo = $relative->userinfo;
+                $target->host = $relative->host;
+                $target->port = $relative->port;
+                $target->path = $this->removeDotSegments($relative->path);
+                $target->query = $relative->query;
             } else {
-                if (!relative.path) {
-                    target.path = base.path;
-                    if (relative.query !== null) {
-                        target.query = relative.query;
+                if (!$relative->path) {
+                    $target->path = $base->path;
+                    if ($relative->query !== null) {
+                        $target->query = $relative->query;
                     } else {
-                        target.query = base.query;
+                        $target->query = $base->query;
                     }
                 } else {
-                    if (relative.path.charAt(0) === "/") {
-                        target.path = URI.removeDotSegments(relative.path);
+                    if ($relative->path[0] === "/") {
+                        $target->path = $this->removeDotSegments($relative->path);
                     } else {
-                        if (base.authority !== null && !base.path) {
-                            target.path = "/" + relative.path;
-                        } else if (!base.path) {
-                            target.path = relative.path;
+                        if ($base->authority !== null && !$base->path) {
+                            $target->path = "/" + $relative->path;
+                        } else if (!$base->path) {
+                            $target->path = $relative->path;
                         } else {
-                            target.path = base.path.slice(0, base.path.lastIndexOf("/") + 1) + relative.path;
+                            $target->path = substr($base->path, 0, strrpos($base.path, "/") + 1) . $relative->path;
                         }
-                        target.path = URI.removeDotSegments(target.path);
+                        $target->path = $this->removeDotSegments($target->path);
                     }
-                    target.query = relative.query;
+                    $target->query = $relative->query;
                 }
-                target.authority = base.authority;
-                target.userinfo = base.userinfo;
-                target.host = base.host;
-                target.port = base.port;
+                $target->authority = $base->authority;
+                $target->userinfo = $base->userinfo;
+                $target->host = $base->host;
+                $target->port = $base->port;
             }
-            target.scheme = base.scheme;
+            $target->scheme = $base->scheme;
         }
         
-        target.fragment = relative.fragment;
+        $target->fragment = $relative->fragment;
         
-        return target;
-    };
+        return $target;
+    }
     
     /**
      * @param {String} baseURI
