@@ -1,6 +1,6 @@
 <?php
 /**
- * URI.php
+ * $this->php
  * 
  * @fileOverview An RFC 3986 compliant, scheme extendable URI parsing/validating/resolving library for PHP.
  * @author Gregory Beaver greg@chiaraquartet.net
@@ -659,9 +659,11 @@ class Uri
      * @returns {String}
      */
     
-    URI.resolve = function (baseURI, relativeURI, options) {
-        return URI.serialize(URI.resolveComponents(URI.parse(baseURI, options), URI.parse(relativeURI, options), options, true), options);
-    };
+    function resolve($baseURI, $relativeURI, Options $options = null)
+    {
+        return $this->serialize($this->resolveComponents($this->parse($baseURI, $options),
+                                                         $this->parse($relativeURI, $options), $options, true), $options);
+    }
     
     /**
      * @param {String|URIComponents} uri
@@ -669,15 +671,16 @@ class Uri
      * @returns {String|URIComponents}
      */
     
-    URI.normalize = function (uri, options) {
-        if (typeof uri === "string") {
-            return URI.serialize(URI.parse(uri, options), options);
-        } else if (typeOf(uri) === "object") {
-            return URI.parse(URI.serialize(uri, options), options);
+    function normalize($uri, Options $options = null)
+    {
+        if (is_string($uri)) {
+            return $this->serialize($this->parse($uri, $options), $options);
+        } else if ($uri instanceof Components) {
+            return $this->parse($this->serialize($uri, $options), $options);
         }
         
-        return uri;
-    };
+        return $uri;
+    }
     
     /**
      * @param {String|URIComponents} uriA
@@ -685,44 +688,46 @@ class Uri
      * @param {Options} options
      */
     
-    URI.equal = function (uriA, uriB, options) {
-        if (typeof uriA === "string") {
-            uriA = URI.serialize(URI.parse(uriA, options), options);
-        } else if (typeOf(uriA) === "object") {
-            uriA = URI.serialize(uriA, options);
+    function equal($uriA, $uriB, Options $options = null)
+    {
+        if (is_string($uriA)) {
+            $uriA = $this->serialize($this->parse($uriA, $options), $options);
+        } else if ($uriA instanceof Components) {
+            $uriA = $this->serialize($uriA, $options);
         }
         
-        if (typeof uriB === "string") {
-            uriB = URI.serialize(URI.parse(uriB, options), options);
-        } else if (typeOf(uriB) === "object") {
-            uriB = URI.serialize(uriB, options);
+        if (is_string($uriB)) {
+            $uriB = $this->serialize($this->parse($uriB, $options), $options);
+        } else if ($uriB instanceof Components) {
+            $uriB = $this->serialize($uriB, $options);
         }
         
-        return uriA === uriB;
-    };
+        return $uriA == $uriB;
+    }
     
     /**
      * @param {String} str
      * @returns {String}
      */
     
-    URI.escapeComponent = function (str) {
-        return str && str.toString().replace(ESCAPE, pctEncChar);
-    };
+    function escapeComponent($str)
+    {
+        if (!$str) {
+            return '';
+        }
+        return preg_replace_callback(static::$regex['ESCAPE'], array($this, 'pctEncChar'), $str);
+    }
     
     /**
      * @param {String} str
      * @returns {String}
      */
     
-    URI.unescapeComponent = function (str) {
-        return str && str.toString().replace(PCT_ENCODEDS, pctDecChars);
-    };
-    
-    //export API
-    exports.Options = Options;
-    exports.URIComponents = URIComponents;
-    exports.SchemeHandler = SchemeHandler;
-    exports.URI = URI;
-    
-}());
+    function unescapeComponent($str)
+    {
+        if (!$str) {
+            return '';
+        }
+        return preg_replace_callback(static::$regex['PCT_ENCODEDS'], array($this, 'pctDecChar'), $str);
+    }
+}
