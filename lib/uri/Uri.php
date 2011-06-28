@@ -475,28 +475,29 @@ class Uri
      * @returns {String}
      */
     
-    URI.removeDotSegments = function (input) {
-        var output = [], s;
+    function removeDotSegments($input) {
+        $output = array();
         
-        while (input.length) {
-            if (input.match(RDS1)) {
-                input = input.replace(RDS1, "");
-            } else if (input.match(RDS2)) {
-                input = input.replace(RDS2, "/");
-            } else if (input.match(RDS3)) {
-                input = input.replace(RDS3, "/");
-                output.pop();
-            } else if (input === "." || input === "..") {
-                input = "";
+        while (strlen($input)) {
+            if (preg_match(static::$regex['RDS1'], $input)) {
+                $input = preg_replace(static::$regex['RDS1'], "", $input);
+            } elseif (preg_match(static::$regex['RDS2'], $input)) {
+                $input = preg_replace(static::$regex['RDS2'], "/", $input);
+            } elseif (preg_match(static::$regex['RDS3'], $input)) {
+                $input = preg_replace(static::$regex['RDS3'], "/", $input);
+                array_pop($output);
+            } elseif ($input === "." || $input === "..") {
+                $input = "";
             } else {
-                s = input.match(RDS5)[0];
-                input = input.slice(s.length);
-                output.push(s);
+                preg_match_all(static::$regex['RDS5'], $input, $matches);
+                $s = $matches[0];
+                $input = array_slice($input, count($s));
+                array_push($output, $s);
             }
         }
         
-        return output.join("");
-    };
+        return implode('', $output);
+    }
     
     /**
      * @param {URIComponents} components
