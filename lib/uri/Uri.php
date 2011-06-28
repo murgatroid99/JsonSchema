@@ -284,8 +284,9 @@ class Uri
     }
 
         
-    function pctEncChar($chr)
+    function pctEncChar($matches)
     {
+        $chr = $matches[0];
         $c = $this->utfCharToNumber(dechex($chr[0]));
 
         if ($c < 128) {
@@ -431,8 +432,8 @@ class Uri
             }
             
             //check if a handler for the scheme exists
-            $schemeHandler = static::$SCHEMES[$components->scheme ? $components->scheme : $options->scheme];
-            if ($schemeHandler && method_exists($schemeHandler, 'parse')) {
+            if (isset(static::$SCHEMES[$components->scheme ? $components->scheme : $options->scheme])) {
+                $schemeHandler = static::$SCHEMES[$components->scheme ? $components->scheme : $options->scheme];
                 //perform extra parsing
                 $components = $schemeHandler->parse($components, $options);
             }
@@ -505,71 +506,79 @@ class Uri
      * @returns {String}
      */
     
-    URI.serialize = function (components, options) {
-        var uriTokens = [], 
-            schemeHandler, 
-            s;
-        options = options || {};
+    function serialize(Components $components, Options $options) {
+        $uriTokens = array(); 
+
+        if (null === $options) {
+            $options = $this->options;
+        }
         
         //check if a handler for the scheme exists
-        schemeHandler = URI.SCHEMES[components.scheme || options.scheme];
-        if (schemeHandler && schemeHandler.serialize) {
+        $schemeHandler = static::$SCHEMES[$components->scheme ? $components->scheme : $options->scheme];
+        if ($schemeHandler && method_exists($schemeHandler, 'parse')) {
+            //perform extra parsing
+            $components = $schemeHandler->parse($components, $options);
+        }
+        //check if a handler for the scheme exists
+        if (isset(static::$SCHEMES[$components->scheme ? $components->scheme : $options->scheme])) {
+            $schemeHandler = static::$SCHEMES[$components->scheme ? $components->scheme : $options->scheme];
             //perform extra serialization
-            schemeHandler.serialize(components, options);
+            $schemeHandler->serialize($components, $options);
         }
         
-        if ($options->reference !== "suffix" && components.scheme) {
-            uriTokens.push(components.scheme.toString().toLowerCase().replace(NOT_SCHEME, ""));
-            uriTokens.push(":");
+        if ($options->reference !== "suffix" && $components->scheme) {
+            $uriTokens[] = preg_replace(static::$regex['NOT_SCHEME'], '', strtolower($components->scheme));
+            $uriTokens[] = ':';
         }
         
-        components.authority = URI._recomposeAuthority(components);
-        if (components.authority !== null) {
+        $components->authority = $this->_recomposeAuthority($components);
+        if ($components->authority !== null) {
             if ($options->reference !== "suffix") {
-                uriTokens.push("//");
+                $uriTokens[] = "//";
             }
             
-            uriTokens.push(components.authority);
+            $uriTokens[] = $components->authority;
             
-            if (components.path && components.path.charAt(0) !== "/") {
-                uriTokens.push("/");
+            if ($components->path && $components->path[0] !== "/") {
+                $uriTokens[] = "/";
             }
         }
         
-        if (components.path) {
-            s = URI.removeDotSegments(components.path.toString().replace(/%2E/ig, "."));
+        if ($components->path) {
+            $s = $this->removeDotSegments(str_replace(array('%2E', '%2e'), '.', $components->path));
             
-            if (components.scheme) {
-                s = s.replace(NOT_PATH, pctEncChar);
+            if ($components->scheme) {
+                $s = preg_replace_callback(static::$regex['NOT_PATH'], array($this, 'pctEncChar'), $s);
             } else {
-                s = s.replace(NOT_PATH_NOSCHEME, pctEncChar);
+                $s = preg_replace_callback(static::$regex['NOT_PATH_NOSCHEME'], array($this, 'pctEncChar'), $s);
             }
             
-            if (components.authority === null) {
-                s = s.replace(/^\/\//, "/%2F");  //don't allow the path to start with "//"
+            if ($components->authority === null) {
+                if (strlen($s) > 1 && $s[0] == '/' && $s[1] == '/')
+                $s = '/%2F' . substr($s, 2);  //don't allow the path to start with "//"
             }
-            uriTokens.push(s);
+            $uriTokens[] = $s;
         }
         
-        if (components.query) {
-            uriTokens.push("?");
-            uriTokens.push(components.query.toString().replace(NOT_QUERY, pctEncChar));
+        if ($components->query) {
+            $uriTokens[] = "?";
+            $uriTokens[] = preg_replace_callback(static::$regex['NOT_QUERY'], array($this, 'pctEncChar'), $components->query);
         }
         
-        if (components.fragment) {
-            uriTokens.push("#");
-            uriTokens.push(components.fragment.toString().replace(NOT_FRAGMENT, pctEncChar));
+        if ($components->fragment) {
+            $uriTokens[] = "#";
+            $uriTokens[] = preg_replace_callback(static::$regex['NOT_FRAGMENT'], array($this, 'pctEncChar'), $components->fragment);
         }
         
-        return uriTokens
-            .join('')  //merge tokens into a string
-            .replace(PCT_ENCODEDS, pctDecUnreserved)  //undecode unreserved characters
-            //.replace(OTHER_CHARS, pctEncChar)  //replace non-URI characters
-            .replace(/%[0-9A-Fa-f]{2}/g, function (str) {  //uppercase percent encoded characters
-                return str.toUpperCase();
-            })
-        ;
-    };
+        return preg_replace_callback('/%[0-9A-Fa-f]{2}/g', function ($matches) {  //uppercase percent encoded characters
+                return strtoupper($matches[0]);
+            },
+            preg_replace_callback(
+                static::$regex['PCT_ENCODEDS'], array($this, 'pctDecUnreserved'),
+                implode('', $uriTokens)
+            )
+        );
+    }
     
     /**
      * @param {URIComponents} base
