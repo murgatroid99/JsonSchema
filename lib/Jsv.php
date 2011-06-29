@@ -40,6 +40,21 @@
 /*jslint white: true, sub: true, onevar: true, undef: true, eqeqeq: true, newcap: true, immed: true, indent: 4 */
 
 namespace JsonSchema;
+function is_json_object($i)
+{
+    if (is_object($i)) {
+        return true;
+    }
+    if (!is_array($i)) {
+        return false;
+    }
+    foreach ($i as $k => $v) {
+        if (is_string($k)) {
+            return true;
+        }
+        return false;
+    }
+}
 class Exception extends \Exception {}
 /**
  * Defines an error, found by a schema, with an instance.
@@ -150,9 +165,14 @@ class Report
 
     private $_checkVars = array('instance', 'schema', 'schemaSchema');
 
+    function __clone()
+    {
+        $this->errors = array();
+    }
+
     function __get($var)
     {
-        if (!isset($this->_checkVars[$var])) {
+        if (!isset($this->_checkVars[$var]) || $var !== 'errors') {
             throw new Exception('Invalid Report variable requested: ' . $var);
         }
         return $this->$var;
@@ -194,11 +214,11 @@ class Report
      * @param {String} schemaUri The URI of the schema that validated the instance
      */
     
-    static function registerValidation($uri, $schemaUri) {
-        if (!isset(static::$validated[$uri])) {
-            static::$validated[$uri] = array($schemaUri);
+    function registerValidation($uri, $schemaUri) {
+        if (!isset($this->validated[$uri])) {
+            $this->validated[$uri] = array($schemaUri);
         } else {
-            static::$validated[$uri][] = $schemaUri;
+            $this->validated[$uri][] = $schemaUri;
         }
     }
     
@@ -212,7 +232,7 @@ class Report
     
     function isValidatedBy($uri, $schemaUri)
     {
-        return isset(static::$validated[$uri]) && in_array(static::$validated[$uri], $schemaUri);
+        return isset($this->validated[$uri]) && in_array($this->validated[$uri], $schemaUri);
     }
 }
     
@@ -894,8 +914,8 @@ class Environment
     
 class JSV
 {
-    private $_environments = array();
-    private $_defaultEnvironmentID = "";
+    static protected $_environments = array();
+    static protected $_defaultEnvironmentID = "";
 
     /**
      * Creates and returns a new {@link Environment} that is a clone of the environment registered with the provided ID.
@@ -906,17 +926,17 @@ class JSV
      * @throws {Error} If there is no environment registered with the provided ID
      */
     
-    function createEnvironment($id)
+    static function createEnvironment($id)
     {
         if (!$id) {
-            $id = $this->_defaultEnvironmentID;
+            $id = static::$_defaultEnvironmentID;
         }
         
-        if (!$this->_environments[$id]) {
+        if (!static::$_environments[$id]) {
             throw new Exception("Unknown Environment ID");
         }
         //else
-        return clone $this->_environments[$id];
+        return clone static::$_environments[$id];
     }
 
     /**
@@ -926,14 +946,14 @@ class JSV
      * @param {Environment} env The environment to register
      */
     
-    function registerEnvironment($id, $env)
+    static function registerEnvironment($id, $env)
     {
         if (!$id && $env) {
             $id = $env->_id;
         }
-        if ($id && !$this->_environments[$id] && $env instanceof Environment) {
+        if ($id && !static::$_environments[$id] && $env instanceof Environment) {
             $env->setId($id);
-            $this->_environments[$id] = $env;
+            static::$_environments[$id] = $env;
         }
     }
 
@@ -944,14 +964,14 @@ class JSV
      * @throws {Error} If there is no registered environment with the provided ID
      */
     
-    function setDefaultEnvironmentID($id)
+    static function setDefaultEnvironmentID($id)
     {
         if (is_string($id)) {
-            if (!$this->_environments[$id]) {
+            if (!static::$_environments[$id]) {
                 throw new Exception("Unknown Environment ID");
             }
             
-            $this->_defaultEnvironmentID = $id;
+            static::$_defaultEnvironmentID = $id;
         }
     }
 
@@ -961,9 +981,9 @@ class JSV
      * @returns {String} The ID of the default environment
      */
     
-    function getDefaultEnvironmentID()
+    static function getDefaultEnvironmentID()
     {
-        return $this->_defaultEnvironmentID;
+        return static::$_defaultEnvironmentID;
     }
 
     //
@@ -986,7 +1006,7 @@ class JSV
      * @param {Object} proto The prototype of the new object
      * @returns {Object} A new object that inherits all of the properties of the provided object
      */
-    //createObject : createObject, use new
+    //createObject : createObject, use clone
         
     /**
      * Returns a new object with each property transformed by the iterator.
@@ -1062,7 +1082,7 @@ class JSV
      * @param {Any} o The object to add to the array if it is not already there
      * @returns {Array} The provided array for chaining
      */
-    function pushUnique($arr, $o)
+    static function pushUnique($arr, $o)
     {
         if (!in_array($o, $arr)) {
             $arr[] = $o;
@@ -1141,7 +1161,7 @@ class JSV
      * @param {String} uri The URI to format
      * @returns {String} The URI formatted for JSV
      */
-    function formatURI($uri)
+    static function formatURI($uri)
     {
         if ($uri[strlen($uri)-1] != '#') {
             $uri .= '#';
@@ -1159,7 +1179,7 @@ class JSV
      * @return {Any} The modified base value
      */
      
-    function inherits($base, $extra = null, $extension = false) {
+    static function inherits($base, $extra = null, $extension = false) {
         $baseType = gettype($base);
         $extraType = gettype($extra);
         
@@ -1200,7 +1220,7 @@ class JSV
             $child = $base;
             foreach ($extra as $x => $unused) {
                 if ($extra[$x] !== JSV::$O[$x]) {
-                    $child[$x] = $this->inherits($base[$x], $extra[$x], $extension);
+                    $child[$x] = self::inherits($base[$x], $extra[$x], $extension);
                 }
             }
             return $child;
