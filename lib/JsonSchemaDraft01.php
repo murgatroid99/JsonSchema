@@ -665,7 +665,8 @@ class JsonSchemaDraft01
                     },
                     
                     "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
-                        $disallowedTypes = settype($schema->getAttribute("disallow"), 'array');
+                        $disallowedTypes = $schema->getAttribute("disallow");
+                        settype($disallowedTypes, 'array');
                         
                         //for instances that are required to be a certain type
                         if (null !== $instance->getValue() && $disallowedTypes && count($disallowedTypes)) {
@@ -819,7 +820,7 @@ class JsonSchemaDraft01
                         $linkSchemaURI = $linkSchemaURI['$ref'];
                         $linkSchema = $self->getEnvironment()->findSchema($linkSchemaURI);
                         $linkParser = $linkSchema ? $linkSchema->getValueOfProperty("parser") : null;
-                        $arg = settype($arg, 'array');
+                        settype($arg, 'array');
                         $arg = array_values($arg);
                         
                         if (is_callable($linkParser)) {
@@ -827,22 +828,23 @@ class JsonSchemaDraft01
                                 return $linkParser($link, $linkSchema);
                             }, $instance->getProperties());
                         } else {
-                            $links = settype($instance->getValue(), 'array');
+                            $links = $instance->getValue();
+                            settype($links, 'array');
                             $links = array_values($links);
                         }
                         
                         if (isset($arg[0])) {
-                            $links = array_filter($links, function ($link) use ($arg) {
+                            $links = array_values(array_filter($links, function ($link) use ($arg) {
                                 return $link["rel"] === $arg[0];
-                            });
+                            }));
                         }
                         
                         if (isset($arg[1])) {
-                            $links = array_map(function ($link) {
+                            $links = array_map(function ($link)  use ($arg) {
                                 $value = null;
                                 $instance = $arg[1];
                                 $href = $link["href"];
-                                $href = preg_replace_callback('/\{(->+)\}/g', function ($matches) use ($instance) {
+                                $href = preg_replace_callback('/\{(.+)\}/', function ($matches) use ($instance) {
                                     $p1 = $matches[1];
                                     if ($p1 === "-this") {
                                         $value = $instance->getValue();
@@ -850,7 +852,7 @@ class JsonSchemaDraft01
                                         $value = $instance->getValueOfProperty($p1);
                                     }
                                     return $value !== null ? $value . '' : "";
-                                }, $links);
+                                }, $href);
                                 return $href ? JSV::formatURI($instance->resolveURI($href)) : $href;
                             }, $links);
                         }

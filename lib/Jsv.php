@@ -273,6 +273,11 @@ class JSONInstance
         return $this->_uri;
     }
 
+    function setUri($uri)
+    {
+        $this->_uri = $uri;
+    }
+
     function getValue()
     {
         return $this->_value;
@@ -368,6 +373,9 @@ class JSONInstance
     function getProperties()
     {
         $val = $this->_value;
+        if ($val === null) {
+            return array();
+        }
         $self = $this;
         settype($val, 'array');
         array_walk($val, function (&$value, $key) use ($self) {
