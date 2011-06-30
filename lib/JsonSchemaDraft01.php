@@ -90,11 +90,11 @@ class JsonSchemaDraft01
             },
             
             "object" => function ($instance, $report) {
-                return is_object($instance->getValue()) || (is_array($instance->getValue()) && is_string(key($instance->getValue())));
+                return is_json_object($instance->getValue());
             },
             
             "array" => function ($instance, $report) {
-                return is_array($instance->getValue());
+                return is_json_array($instance->getValue());
             },
             
             "null" => function ($instance, $report) {
@@ -139,7 +139,7 @@ class JsonSchemaDraft01
                                 $instance, 
                                 $self->getEnvironment()->findSchema($self->resolveURI("#"))
                             );
-                        } else if (is_array($instance->getValue())) {
+                        } else if (is_array($instance->getValue())) { // don't need is_json_array because of previous elseif
                             $parser = $self->getValueOfProperty("parser");
                             return array_map(function ($prop) use ($parser, $self) {
                                 return $parser($prop, $self);
@@ -237,7 +237,7 @@ class JsonSchemaDraft01
                     "parser" => function ($instance, $self) {
                         if (is_json_object($instance->getValue())) {
                             return $instance->getEnvironment()->createSchema($instance, $self->getEnvironment()->findSchema($self->resolveURI("#")));
-                        } else if (is_array($instance->getValue())) {
+                        } else if (is_array($instance->getValue())) { // don't need is_json_array here because of previous if
                             $sch = $self->getEnvironment()->findSchema($self->resolveURI("#"));
                             return array_map(function ($instance) use ($sch){
                                 return $instance->getEnvironment()->createSchema($instance, $sch);
@@ -249,12 +249,12 @@ class JsonSchemaDraft01
                     
                     "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
                         
-                        if (is_array($instance->getValue()) && !is_json_object($instance->getValue())) {
+                        if (is_json_array($instance->getValue())) {
                             $properties = $instance->getProperties();
                             $items = $schema->getAttribute("items");
                             $additionalProperties = $schema->getAttribute("additionalProperties");
                             
-                            if (is_array($items)) {
+                            if (is_array($items)) { // no need for is_json_array here, items is either 1 thing or an array of things
                                 for ($x = 0, $xl = count($properties); $x < $xl; ++$x) {
                                     if ($items[$x]) {
                                         $itemSchema = $items[$x];
@@ -455,7 +455,7 @@ class JsonSchemaDraft01
                     },
                     
                     "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
-                        if (is_array($instance->getValue()) && !is_json_object($instance->getValue())) {
+                        if (is_json_array($instance->getValue())) {
                             $minItems = $schema->getAttribute("minItems");
                             if (is_numeric($minItems) && count($instance->getProperties()) < $minItems) {
                                 $report->addError($instance, $schema, "minItems", "The number of items is less then the required minimum", $minItems);
@@ -476,7 +476,7 @@ class JsonSchemaDraft01
                     },
                     
                     "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
-                        if (is_array($instance->getValue()) && !is_json_object($instance->getValue())) {
+                        if (is_json_array($instance->getValue())) {
                             $maxItems = $schema->getAttribute("maxItems");
                             if (is_numeric($maxItems) && count($instance->getProperties()) > $maxItems) {
                                 $report->addError($instance, $schema, "maxItems", "The number of items is greater then the required maximum", $maxItems);
@@ -560,7 +560,7 @@ class JsonSchemaDraft01
                     "uniqueItems" => true,
                     
                     "parser" => function ($instance, $self) {
-                        if (is_array($instance->getValue())) {
+                        if (is_json_array($instance->getValue())) {
                             return $instance->getValue();
                         }
                     },
@@ -659,7 +659,7 @@ class JsonSchemaDraft01
                     "uniqueItems" => true,
                     
                     "parser" => function ($instance, $self) {
-                        if (is_string($instance->getValue()) || is_array($instance->getType())) {
+                        if (is_string($instance->getValue()) || is_json_array($instance->getType())) {
                             return $instance->getValue();
                         }
                     },
@@ -711,7 +711,7 @@ class JsonSchemaDraft01
                     "parser" => function ($instance, $self) {
                         if (is_json_object($instance->getValue())) {
                             return $instance->getEnvironment()->createSchema($instance, $self->getEnvironment()->findSchema($self->resolveURI("#")));
-                        } else if (is_array($instance->getValue())) {
+                        } else if (is_array($instance->getValue())) { // is_json_array not needed because of previous if
                             $sch = $self->getEnvironment()->findSchema($self->resolveURI("#"));
                             return array_map(function ($instance) use ($sch, $instance) {
                                 return $instance->getEnvironment()->createSchema(instance, $sch);
@@ -724,7 +724,7 @@ class JsonSchemaDraft01
                         if ($extensions) {
                             if ($extensions instanceof JSONSchema) {
                                 $extensions->validate($instance, $report, $parent, $parentSchema, $name);
-                            } else if (is_array($extensions) && !is_json_object($extensions)) {
+                            } else if (is_json_array($extensions)) {
                                 for ($x = 0, $xl = count($extensions); $x < $xl; ++$x) {
                                     $extensions[$x]->validate($instance, $report, $parent, $parentSchema, $name);
                                 }

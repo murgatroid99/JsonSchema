@@ -57,6 +57,18 @@ function is_json_object($i)
         return false;
     }
 }
+function is_json_array($i)
+{
+    if (!is_array($i)) {
+        return false;
+    }
+    foreach ($i as $k => $v) {
+        if (is_string($k)) {
+            return false;
+        }
+        return true;
+    }
+}
 //class Exception extends \Exception {}
 /**
  * Defines an error, found by a schema, with an instance.
@@ -1212,6 +1224,9 @@ class JSV
         
         if ($extra === null) {
             if (is_object($base)) {
+                if (is_callable($base)) {
+                    return $base; // Closure cannot be cloned
+                }
                 return clone $base;
             }
             if (is_array($base)) {
@@ -1224,6 +1239,9 @@ class JSV
             return $base;
         } else if ($base === null || $extraType !== $baseType) {
             if (is_object($extra)) {
+                if (is_callable($extra)) {
+                    return $extra; // Closure cannot be cloned
+                }
                 return clone $extra;
             }
             if (is_array($extra)) {
@@ -1251,6 +1269,9 @@ class JSV
             return $child;
         } else {
             if (is_object($extra)) {
+                if (is_callable($base)) {
+                    return $base; // Closure cannot be cloned
+                }
                 return clone $extra;
             }
             if (is_array($extra)) {
