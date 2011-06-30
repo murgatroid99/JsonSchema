@@ -43,8 +43,7 @@ namespace JsonSchema;
 
 class JsonSchemaDraft01
 {
-    var $O = array(),
-        $ENVIRONMENT,
+    var $ENVIRONMENT,
         $TYPE_VALIDATORS,
         $SCHEMA,
         $HYPERSCHEMA,
@@ -59,9 +58,9 @@ class JsonSchemaDraft01
         $this->initializeLinks();
 
         //We need to reinitialize these 3 schemas as they all reference each other
-        $this->SCHEMA = $this->ENVIRONMENT->createSchema($this->SCHEMA->getValue(), $this->HYPERSCHEMA, "http://json-schema->org/schema#");
-        $this->HYPERSCHEMA = $this->ENVIRONMENT->createSchema($this->HYPERSCHEMA->getValue(), $this->HYPERSCHEMA, "http://json-schema->org/hyper-schema#");
-        $this->LINKS = $this->ENVIRONMENT->createSchema($this->LINKS->getValue(), $this->HYPERSCHEMA, "http://json-schema->org/links#");
+        $this->SCHEMA = $this->ENVIRONMENT->createSchema($this->SCHEMA->getValue(), $this->HYPERSCHEMA, "http://json-schema.org/schema#");
+        $this->HYPERSCHEMA = $this->ENVIRONMENT->createSchema($this->HYPERSCHEMA->getValue(), $this->HYPERSCHEMA, "http://json-schema.org/hyper-schema#");
+        $this->LINKS = $this->ENVIRONMENT->createSchema($this->LINKS->getValue(), $this->HYPERSCHEMA, "http://json-schema.org/links#");
     
         JSV::registerEnvironment("json-schema-draft-00", $this->ENVIRONMENT);
         JSV::registerEnvironment("json-schema-draft-01", JSV::createEnvironment("json-schema-draft-00"));
@@ -71,7 +70,7 @@ class JsonSchemaDraft01
         }
     }
 
-    function initializeTypeValidator()
+    function initializeTypeValidators()
     {
         $this->TYPE_VALIDATORS = array(
             "string" => function ($instance, $report) {
@@ -170,7 +169,7 @@ class JsonSchemaDraft01
                                         return true;  //instance matches this schema
                                     }
                                 } else {
-                                    if ($typeValidators[$type] !== $this->O[$type] && is_callable($typeValidators[$type])) {
+                                    if (is_callable($typeValidators[$type])) {
                                         if ($typeValidators[$type]($instance, $report)) {
                                             return true;  //type is valid
                                         }
@@ -197,7 +196,7 @@ class JsonSchemaDraft01
                     "optional" => true,
                     "default" => array(),
                     
-                    "parser" => function ($instance, $self, $arg) {
+                    "parser" => function ($instance, $self, $arg = null) {
                         $env = $instance->getEnvironment();
                         $selfEnv = $self->getEnvironment();
                         if (is_json_object($instance->getValue())) {
@@ -220,7 +219,7 @@ class JsonSchemaDraft01
                             //for each property defined in the schema
                             $propertySchemas = $schema->getAttribute("properties");
                             foreach (propertySchemas as $key => $val) {
-                                if ($val !== $this->O[$key] && $val) {
+                                if ($val) {
                                     //ensure that instance property is valid
                                     $val->validate($instance->getProperty($key), $report, $instance, $schema, $key);
                                 }
@@ -327,7 +326,7 @@ class JsonSchemaDraft01
                             }
                             $properties = $instance->getProperties();
                             foreach ($properties as $key => $val) {
-                                if ($val !== $this->O[$key] && $val && !isset($propertySchemas[$key])) {
+                                if ($val && !isset($propertySchemas[$key])) {
                                     if ($additionalProperties instanceof JSONSchema) {
                                         $additionalProperties->validate($val, $report, $instance, $schema, $key);
                                     } else if ($additionalProperties === false) {
@@ -605,7 +604,7 @@ class JsonSchemaDraft01
                         if (is_string($instance->getValue())) {
                             $format = $schema->getAttribute("format");
                             $formatValidators = $self->getValueOfProperty("formatValidators");
-                            if (is_string($format) && $formatValidators[$format] !== $this->O[$format] &&
+                            if (is_string($format) &&
                                 is_callable($formatValidators[$format]) && !$formatValidators[$format]($instance, $report)) {
                                 $report->addError($instance, $schema, "format", "String is not in the required format", $format);
                             }
@@ -679,7 +678,7 @@ class JsonSchemaDraft01
                             //ensure that type matches for at least one of the required types
                             for ($x = 0, $xl = count($disallowedTypes); $x < $xl; ++$x) {
                                 $key = $disallowedTypes[$x];
-                                if ($typeValidators[$key] !== $this->O[$key] && is_callabel($typeValidators[$key])) {
+                                if (is_callable($typeValidators[$key])) {
                                     if ($typeValidators[$key]($instance, $report)) {
                                         $report->addError($instance, $schema, "disallow", "Instance is a disallowed type", $disallowedTypes);
                                         return false;
@@ -750,17 +749,15 @@ class JsonSchemaDraft01
                 $attributeSchemas = $self->getAttribute("properties");
                 
                 foreach ($attributeSchemas as $x => $val) {
-                    if ($val !== $this->O[$x] && $attributeSchemas[$x]->getValueOfProperty("validationRequired")) {
+                    if ($attributeSchemas[$x]->getValueOfProperty("validationRequired")) {
                         JSV::pushUnique($propNames, $x);
                     }
                 }
                 
                 for ($x = 0, $xl = count($propNames); $x < $xl; ++$x) {
-                    if ($attributeSchemas[$propNames[$x]] !== $this->O[$propNames[$x]]) {
-                        $validator = $attributeSchemas[$propNames[$x]]->getValueOfProperty("validator");
-                        if (is_callable($validator)) {
-                            $validator($instance, $schema, $attributeSchemas[$propNames[$x]], $report, $parent, $parentSchema, $name);
-                        }
+                    $validator = $attributeSchemas[$propNames[$x]]->getValueOfProperty("validator");
+                    if (is_callable($validator)) {
+                        $validator($instance, $schema, $attributeSchemas[$propNames[$x]], $report, $parent, $parentSchema, $name);
                     }
                 }
             },
@@ -769,16 +766,16 @@ class JsonSchemaDraft01
                 
                 do {
                     //if there is a link to the full representation, replace instance
-                    $link = $instance->_schema->getLink("full", $instance);
+                    $link = $instance->getSchema()->getLink("full", $instance);
                     $sch = $instance->getEnvironment()->getSchemas();
-                    if ($link && $instance->getUri() !== $link && $sch[$link]) {
+                    if ($link && $instance->getUri() !== $link && isset($sch[$link])) {
                         $instance = $sch[$link];
                         return $instance;  //retrieved schemas are guaranteed to be initialized
                     }
                     
                     //if there is a link to a different schema, update instance
                     $link = $instance->getSchema()->getLink("describedby", $instance);
-                    if ($link && $instance->getSchema()->getUri() !== $link && $sch[$link]) {
+                    if ($link && $instance->getSchema()->getUri() !== $link && isset($sch[$link])) {
                         $instance->setSchema($sch[$link]);
                         continue;  //start over
                     }
@@ -802,14 +799,14 @@ class JsonSchemaDraft01
                 
                 return $instance;
             }
-        ), true, "http://json-schema->org/schema#");
+        ), true, "http://json-schema.org/schema#");
     }
 
     function initializeHyperSchema()
     {
         $this->HYPERSCHEMA = $this->ENVIRONMENT->createSchema(JSV::inherits($this->SCHEMA, $this->ENVIRONMENT->createSchema(array(
-            '$schema' => "http://json-schema->org/hyper-schema#",
-            "id" => "http://json-schema->org/hyper-schema#",
+            '$schema' => "http://json-schema.org/hyper-schema#",
+            "id" => "http://json-schema.org/hyper-schema#",
         
             "properties" => array(
                 "links" => array(
@@ -817,7 +814,7 @@ class JsonSchemaDraft01
                     "items" => array('$ref' => "links#"),
                     "optional" => true,
                     
-                    "parser" => function ($instance, $self, $arg) {
+                    "parser" => function ($instance, $self, $arg = null) {
                         $linkSchemaURI = $self->getValueOfProperty("items");
                         $linkSchemaURI = $linkSchemaURI['$ref'];
                         $linkSchema = $self->getEnvironment()->findSchema($linkSchemaURI);
@@ -929,17 +926,17 @@ class JsonSchemaDraft01
             )//,
             
             //not needed as JSV->inherits does the job for us
-            //"extends" => array('$ref' => "http://json-schema->org/schema#"}
-        ), $this->SCHEMA), true), true, "http://json-schema->org/hyper-schema#");
+            //"extends" => array('$ref' => "http://json-schema.org/schema#"}
+        ), $this->SCHEMA), true), true, "http://json-schema.org/hyper-schema#");
         
-        $this->ENVIRONMENT->setOption("defaultSchemaURI", "http://json-schema->org/hyper-schema#");
+        $this->ENVIRONMENT->setOption("defaultSchemaURI", "http://json-schema.org/hyper-schema#");
     }
 
     function initializeLinks()
     {
         $this->LINKS = $this->ENVIRONMENT->createSchema(array(
-            '$schema' => "http://json-schema->org/hyper-schema#",
-            "id" => "http://json-schema->org/links#",
+            '$schema' => "http://json-schema.org/hyper-schema#",
+            "id" => "http://json-schema.org/links#",
             "type" => "object",
             
             "properties" => array(
@@ -968,7 +965,7 @@ class JsonSchemaDraft01
                     "additionalProperties" => array('$ref' => "hyper-schema#"),
                     "optional" => true,
                     
-                    "parser" => function ($instance, $self, $arg) {
+                    "parser" => function ($instance, $self, $arg = null) {
                         $env = $instance->getEnvironment();
                         $selfEnv = $self->getEnvironment();
                         $additionalPropertiesSchemaURI = $self->getValueOfProperty("additionalProperties");
@@ -991,18 +988,20 @@ class JsonSchemaDraft01
             "parser" => function ($instance, $self) {
                 $selfProperties = $self->getProperty("properties");
                 if (is_json_object($instance)) {
-                    return array_map(function ($property, $key) use ($selfProperties) {
+                    $props = $instance->getProperties();
+                    array_walk($props, function (&$property, $key) use ($selfProperties) {
                         $propertySchema = $selfProperties->getProperty($key);
                         $parser = $propertySchema ? $propertySchema->getValueOfProperty("parser") : null;
                         if (is_callable($parser)) {
-                            return $parser($property, $propertySchema);
+                            $property = $parser($property, $propertySchema);
                         }
                         //else
-                        return $property->getValue();
-                    }, $instance->getProperties());
+                        $property = $property->getValue();
+                    });
+                    return $props;
                 }
                 return $instance->getValue();
             }
-        ), HYPERSCHEMA, "http://json-schema->org/links#");
+        ), HYPERSCHEMA, "http://json-schema.org/links#");
     }    
 }

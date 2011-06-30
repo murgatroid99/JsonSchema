@@ -38,8 +38,10 @@
  */
 
 /*jslint white: true, sub: true, onevar: true, undef: true, eqeqeq: true, newcap: true, immed: true, indent: 4 */
-
 namespace JsonSchema;
+include 'uri/Uri.php';
+//include 'uri/UriCache.php';
+include 'JsonSchemaDraft01.php';
 function is_json_object($i)
 {
     if (is_object($i)) {
@@ -55,10 +57,10 @@ function is_json_object($i)
         return false;
     }
 }
-class Exception extends \Exception {}
+//class Exception extends \Exception {}
 /**
  * Defines an error, found by a schema, with an instance.
- * This class can only be instantiated by {@link Report#addError}. 
+ * This class can only be instantiated by {@link Report#addError}.
  */
 class ValidationException extends Exception
 {
@@ -261,7 +263,7 @@ class JSONInstance
 
     function getValue()
     {
-        return $this->value;
+        return $this->_value;
     }
 
     function getEnvironment()
@@ -276,7 +278,7 @@ class JSONInstance
      * @param {String} [fd] The fragment delimiter for properties. If undefined, uses the environment default.
      */
     
-    function __construct(Environment $env, $json, $uri, $fd) {
+    function __construct(Environment $env, $json, $uri, $fd = null) {
         if ($json instanceof JSONInstance) {
             if (!is_string($fd)) {
                 $fd = $json->getFd();
@@ -288,16 +290,16 @@ class JSONInstance
         }
         
         if (!is_string($uri)) {
-            $uri = "urn:uuid:" + JSV::randomUUID() + "#";
+            $uri = "urn:uuid:" . JSV::randomUUID() . "#";
         } else if (strpos($uri, ":") === -1) {
             $urimanager = new URI();
-            $uri = JSV::formatURI($urimanager->resolve("urn:uuid:" + JSV::randomUUID() + "#", $uri));
+            $uri = JSV::formatURI($urimanager->resolve("urn:uuid:" . JSV::randomUUID() . "#", $uri));
         }
         
         $this->_env = $env;
         $this->_value = $json;
         $this->_uri = $uri;
-        $this->_fd = $fd || $this->_fd = $this->_env->getOption("defaultFragmentDelimiter");
+        $this->_fd = $fd ? $fd : $this->_env->getOption("defaultFragmentDelimiter");
     }
     
     /**
@@ -310,7 +312,7 @@ class JSONInstance
     function resolveURI($uri)
     {
         $urimanager = new URI();
-        return $urimanager->formatURI($urimanager->resolve($this._uri, $uri));
+        return JSV::formatURI($urimanager->resolve($this->_uri, $uri));
     }
     
     /**
@@ -333,12 +335,12 @@ class JSONInstance
     
     function getProperty($key)
     {
-        $value = $this->_value ? $this->_value[$key] : null;
+        $value = isset($this->_value) && is_array($this->_value) && isset($this->_value[$key]) ? $this->_value[$key] : null;
         if ($value instanceof JSONInstance) {
             return $value;
         }
         //else
-        return new JSONInstance($this._env, $value, $this._uri + $this._fd + JSV::escapeURIComponent($key), $this._fd);
+        return new JSONInstance($this->_env, $value, $this->_uri + $this->_fd + urlencode($key), $this->_fd);
     }
     
     /**
@@ -354,13 +356,15 @@ class JSONInstance
     function getProperties()
     {
         $val = $this->_value;
+        $self = $this;
         settype($val, 'array');
-        return array_map(function ($value, $key) use ($self) {
+        array_walk($val, function (&$value, $key) use ($self) {
             if ($value instanceof JSONInstance) {
-                return $value;
+                return;
             }
-            return new JSONInstance($self.getEnv(), $value, $self->getUri() . $self->getFd() . JSV::escapeURIComponent($key), $self->getFd());
-        }, $val);
+            $value = new JSONInstance($self->getEnvironment(), $value, $self->getUri() . $self->getFd() . urlencode($key), $self->getFd());
+        });
+        return $val;
     }
     
     /**
@@ -439,7 +443,7 @@ class JSONSchema extends JSONInstance
         }
         
         //determine fragment delimiter from schema
-        $fr = $this->_schema.getValueOfProperty("fragmentResolution");
+        $fr = $this->_schema->getValueOfProperty("fragmentResolution");
         if ($fr === "dot-delimited") {
             $this->_fd = ".";
         } else if ($fr === "slash-delimited") {
@@ -503,7 +507,7 @@ class JSONSchema extends JSONInstance
     function getAttribute($key, $arg = null)
     {
         if (!array_key_exists($key, $this->_attributes)) {
-            throw new Exception('Unknown attribute ' . $key . ' requested ' . $this->_uri);
+            return null;
         }
         if (!$arg) {
             return $this->_attributes[$key];
@@ -538,29 +542,27 @@ class JSONSchema extends JSONInstance
         if (!count($this->_attributes) && (is_object($this->_value) || (is_array($this->_value) && !is_int(key($this->_value))))) {
             $properties = $this->getProperties();
             $schemaProperties = $this->_schema->getProperty("properties");
-            $this->_attributes = new stdClass;
+            $this->_attributes = array();
             foreach ($properties as $key => $val) {
-                if ($val !== JSV::$O[$key]) {
-                    if (count($schemaProperties)) {
-                        $schemaProperty = $schemaProperties->getProperty($key);
-                        if ($schemaProperty) {
-                            $parser = $schemaProperty->getValueOfProperty("parser");
-                        }
+                if (count($schemaProperties)) {
+                    $schemaProperty = $schemaProperties->getProperty($key);
+                    if ($schemaProperty) {
+                        $parser = $schemaProperty->getValueOfProperty("parser");
                     }
-                    if (is_callable($parser)) {
-                        if (is_object($parser)) {
-                            $this->_attributes[$key] = $parser($properties[$key], $schemaProperty);
-                        } else {
-                            $this->_attributes[$key] = call_user_func($parser, $properties[$key], $schemaProperty);
-                        }
+                }
+                if (is_callable($parser)) {
+                    if (is_object($parser)) {
+                        $this->_attributes[$key] = $parser($properties[$key], $schemaProperty);
                     } else {
-                        $this->_attributes[$key] = $properties[$key].getValue();
+                        $this->_attributes[$key] = call_user_func($parser, $properties[$key], $schemaProperty);
                     }
+                } else {
+                    $this->_attributes[$key] = $properties[$key]->getValue();
                 }
             }
         }
         
-        return JSV::inherits($this._attributes);
+        return JSV::inherits($this->_attributes);
     }
     
     /**
@@ -612,7 +614,21 @@ class JSONSchema extends JSONInstance
         return $report;
     }
 }
-    
+
+class EnvironmentOptions
+{
+    public $defaultFragmentDelimiter = '',
+           $defaultSchemaURI = '';
+    function __set($var, $value)
+    {
+        throw new Exception('Unknown option value: ' . $var);
+    }
+    function __get($var)
+    {
+        throw new Exception('Unknown option value: ' . $var);
+    }
+}
+
 class Environment
 {
     protected $_schemas = array();
@@ -627,7 +643,7 @@ class Environment
     
     function __construct() {
         $this->_id = JSV::randomUUID();
-        $this->_options = new Options;
+        $this->_options = new EnvironmentOptions;
     }
     
     /**
@@ -737,7 +753,7 @@ class Environment
     
     function setOption($name, $value)
     {
-        $this->_options[$name] = $value;
+        $this->_options->$name = $value;
     }
     
     /**
@@ -749,7 +765,7 @@ class Environment
     
     function getOption($name)
     {
-        return $this->_options[$name];
+        return $this->_options->$name;
     }
     
     /**
@@ -871,22 +887,20 @@ class Environment
                     
                     $properties = $instance->getAttributes();
                     foreach ($properties as $key => $val) {
-                        if ($val !== JSV::$O[$key]) {
-                            array_push($stack, array($uri . "/" . JSV::escapeURIComponent($key), $val));
-                        }
+                        array_push($stack, array($uri . "/" . urlencode($key), $val));
                     }
                 }
             } else if (is_object($instance)) {
                 $properties = $instance;
                 foreach (get_object_vars($properties) as $key => $val) {
                     if (isset($val)) {
-                        array_push($stack, array($uri . "/" . JSV::escapeURIComponent($key), $val));
+                        array_push($stack, array($uri . "/" . urlencode($key), $val));
                     }
                 }
             } else if (is_array($instance)) {
                 $properties = $instance;
                 foreach ($properties as $key => $val) {
-                    array_push($stack, array($uri . "/" . JSV::escapeURIComponent($key), $val));
+                    array_push($stack, array($uri . "/" . urlencode($key), $val));
                 }
             }
         }
@@ -903,11 +917,19 @@ class Environment
     {
         return $this->_id;
     }
+
+    function getSchemas()
+    {
+        return $this->_schemas;
+    }
 }
     
     /**
      * A globaly accessible object that provides the ability to create and manage {@link Environments},
      * as well as providing utility methods.
+     *
+     * Note: when porting JSV to PHP, remove all references to an "O" (the letter O) variable, this hack is
+     * only necessary in javascript to make for (a in blah) work and is not needed in PHP
      * 
      * @namespace
      */
@@ -1219,9 +1241,7 @@ class JSV
             }
             $child = $base;
             foreach ($extra as $x => $unused) {
-                if ($extra[$x] !== JSV::$O[$x]) {
-                    $child[$x] = self::inherits($base[$x], $extra[$x], $extension);
-                }
+                $child[$x] = self::inherits($base[$x], $extra[$x], $extension);
             }
             return $child;
         } else {
@@ -1239,3 +1259,5 @@ class JSV
         }
     }
 }
+new JsonSchemaDraft01;
+$env = JSV::createEnvironment("json-schema-draft-01");

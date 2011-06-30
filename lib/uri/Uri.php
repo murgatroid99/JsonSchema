@@ -42,7 +42,9 @@ class Options
 {
     public $tolerant = true,
            $scheme = '',
-           $reference = '';
+           $reference = '',
+           $defaultFragmentDelimiter = '',
+           $defaultSchemaUri = '';
     function __set($var, $value)
     {
         throw new Exception('Unknown option value: ' . $var);
@@ -123,12 +125,7 @@ class Components
      * @type Array
      */
     
-    $errors;
-
-    function __construct()
-    {
-        $this->errors = new PEAR2\MultiErrors;
-    }
+    $errors = array('E_ERROR' => array());
 
     function __set($var, $value)
     {
@@ -156,7 +153,6 @@ class Uri
         'GEN_DELIMS' => "[\\:\\/\\?\\#\\[\\]\\@]",
         'SUB_DELIMS' => "[\\!\\$\\&\\'\\(\\)\\*\\+\\,\\;\\=]",
         'H16' => "(?:[0-9a-fA-F]{1,4})",
-        'IPV6ADDRESS' => "((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?", // from stackoverflow
         'PORT' => "(?:\\d*)",
         'URI_PARSE' => "/^(?:([^:\/?#]+):)?(?:\/\/((?:([^\/?#@]*)@)?([^\/?#:]*)(?:\:(\d*))?))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?/i",
         'RDS1' => "/^\.\.?\//",
@@ -174,9 +170,10 @@ class Uri
     
     static function mergeSet($set)
     {
+        $set = substr($set, 0, strlen($set) - 1);
         for ($i = 1; $i < func_num_args(); $i++) {
             $nextSet = func_get_arg($i);
-            $set = substr($set, 0, strlen($set - 2)) . substr($nextSet, 1, strlen($nextSet) - 3);
+            $set .= substr($nextSet, 1, strlen($nextSet) - 2);
         }
         return $set . ']';
     }
@@ -187,33 +184,39 @@ class Uri
         return "(?:" . $str . ")";
     }
 
-    static function setupRegex()
+    static function setupRegex($cache = true)
     {
         static $done = 0;
         if ($done) return;
+        if (class_exists(__NAMESPACE__ . '\UriCache', 1)) {
+            static::$regex = UriCache::$regex;
+            $done = 1;
+            return;
+        }
         $r = &static::$regex;
-        $r['RESERVED'] = static::mergeSet($r['GEN_DELIM'], $r['SUB_DELIMS']);
+        $r['RESERVED'] = static::mergeSet($r['GEN_DELIMS'], $r['SUB_DELIMS']);
         $r['UNRESERVED'] = static::mergeSet($r['ALPHA'], $r['DIGIT'], "[\\-\\.\\_\\~]");
         $r['UNRESERVED_SET'] = array();
-        for ($i = ord('a'); $i < ord('z'); $i++) {
+        for ($i = ord('a'); $i <= ord('z'); $i++) {
             $r['UNRESERVED_SET'][chr($i)] = 1;
             $r['UNRESERVED_SET'][chr($i - 32)] = 1;
         }
         for ($i = 0; $i < 10; $i++) { // digits
-            $r['UNRESERVED_SET'][chr(48 + $i)] = 1;
+            $r['UNRESERVED_SET'][chr(48 + $i) . ''] = 1;
         }
         $r['UNRESERVED_SET']['-'] = 1;
         $r['UNRESERVED_SET']['.'] = 1;
         $r['UNRESERVED_SET']['_'] = 1;
         $r['UNRESERVED_SET']['~'] = 1;
-        $r['SCHEME'] = static::subexp($r['ALPHA'] + static::mergeSet($r['ALPHA'], $r['DIGIT'], "[\\+\\-\\.]") + "*");
+        $r['SCHEME'] = static::subexp($r['ALPHA'] . static::mergeSet($r['ALPHA'], $r['DIGIT'], "[\\+\\-\\.]") . "*");
         $r['USERINFO'] = static::subexp(static::subexp($r['PCT_ENCODED'] . '|' . static::mergeSet($r['UNRESERVED'], $r['SUB_DELIMS'], "[\\:]")) . '*');
         $r['DEC_OCTET'] = static::subexp($r['DIGIT'] . "|" . static::subexp("[1-9]" . $r['DIGIT']) . "|" . static::subexp("1" .
-                                                                                                                          $r['DIGIT'] + $r['DIGIT']) .
+                                                                                                                          $r['DIGIT'] . $r['DIGIT']) .
                                          "|" . static::subexp("2[0-4]" . $r['DIGIT']) . "|" . static::subexp("25[0-5]"));
         $r['IPV4ADDRESS'] = static::subexp($r['DEC_OCTET'] . "\\." . $r['DEC_OCTET'] . "\\." . $r['DEC_OCTET'] . "\\." . $r['DEC_OCTET']);
         $r['LS32'] = static::subexp(static::subexp($r['H16'] . "\\:" . $r['H16']) . "|" . $r['IPV4ADDRESS']);
-        $r['IPVFUTURE'] = static::subexp("v" + $r['HEXDIG'] . "+\\." . static::mergeSet($r['UNRESERVED'], $r['SUB_DELIMS'], "[\\:]") . "+");
+        $r['IPV6ADDRESS'] = static::subexp(static::mergeSet($r['UNRESERVED'], $r['SUB_DELIMS'], "[\\:]") . "+");  //FIXME
+        $r['IPVFUTURE'] = static::subexp("v" . $r['HEXDIG'] . "+\\." . static::mergeSet($r['UNRESERVED'], $r['SUB_DELIMS'], "[\\:]") . "+");
         $r['IP_LITERAL'] = static::subexp("\\[" . static::subexp($r['IPV6ADDRESS'] . "|" . $r['IPVFUTURE']) . "\\]");
         $r['REG_NAME'] = static::subexp(static::subexp($r['PCT_ENCODED'] . "|" . static::mergeSet($r['UNRESERVED'], $r['SUB_DELIMS'])) . "*");
         $r['HOST'] = static::subexp($r['IP_LITERAL'] . "|" . $r['IPV4ADDRESS'] . "|" . $r['REG_NAME']);
@@ -270,6 +273,38 @@ class Uri
         $r['OTHER_CHARS'] = "/" . static::mergeSet("[^\\%]", $r['UNRESERVED'], $r['RESERVED']) . "/g";
         $r['PCT_ENCODEDS'] = "/" . $r['PCT_ENCODED'] . "+" . "/g";
         $done = 1;
+        if ($cache) {
+            // save this complicated crap to a cached php file for faster loading later
+            file_put_contents(__DIR__ . '/UriCache.php', str_replace(array(
+                '0 => 1',
+                '1 => 1',
+                '2 => 1',
+                '3 => 1',
+                '4 => 1',
+                '5 => 1',
+                '6 => 1',
+                '7 => 1',
+                '8 => 1',
+                '9 => 1',
+                                                                          ),
+                                                                     array(
+                '"0" => 1',
+                '"1" => 1',
+                '"2" => 1',
+                '"3" => 1',
+                '"4" => 1',
+                '"5" => 1',
+                '"6" => 1',
+                '"7" => 1',
+                '"8" => 1',
+                '"9" => 1',
+                                                                          ), '<?php namespace ' . __NAMESPACE__ . ";\n" .
+                              "class UriCache\n" .
+                              "{\n" .
+                              'static $regex = ' .
+                              var_export($r, 1) .
+                              ';}'));
+        }
     }
     
     function utfCharToNumber($char) // from PHP manual comments on ord()
@@ -290,11 +325,11 @@ class Uri
         $c = $this->utfCharToNumber(dechex($chr[0]));
 
         if ($c < 128) {
-            return "%" + strtoupper(dechex($c));
+            return "%" . strtoupper(dechex($c));
         } elseif (($c > 127) && ($c < 2048)) {
-            return "%" + strtoupper(dechex(($c >> 6) | 192)) . "%" . strtoupper(dechex(($c & 63) | 128));
+            return "%" . strtoupper(dechex(($c >> 6) | 192)) . "%" . strtoupper(dechex(($c & 63) | 128));
         } else {
-            return "%" + strtoupper(dechex((c >> 12) | 224)) . "%" . strtoupper(dechex((($c >> 6) & 63) | 128)) .
+            return "%" . strtoupper(dechex((c >> 12) | 224)) . "%" . strtoupper(dechex((($c >> 6) & 63) | 128)) .
                 "%" . strtoupper(dechex(($c & 63) | 128));
         }
     }
@@ -358,7 +393,7 @@ class Uri
      * @namespace
      */
     
-    protected $SCHEMES = array();
+    protected static $SCHEMES = array();
 
     function addScheme(SchemeHandlerInterface $handler)
     {
@@ -381,7 +416,7 @@ class Uri
         }
         
         if ($options->reference === "suffix") {
-            $uriString = ($options->scheme ? $options->scheme . ":" : "") . "//" + $uriString;
+            $uriString = ($options->scheme ? $options->scheme . ":" : "") . "//" . $uriString;
         }
         
         if (preg_match(static::$regex['URI_REF'], $uriString, $matches)) {
@@ -428,7 +463,7 @@ class Uri
             
             //check for reference errors
             if ($options->reference && $options->reference !== "suffix" && $options->reference !== $components->reference) {
-                $components->errors->E_ERROR[] = new Exception("URI is not a " + $options->reference + " reference.");
+                $components->errors->E_ERROR[] = new Exception("URI is not a " . $options->reference . " reference.");
             }
             
             //check if a handler for the scheme exists
@@ -609,7 +644,7 @@ class Uri
             $target->path = $this->removeDotSegments($relative->path);
             $target->query = $relative->query;
         } else {
-            if ($relative->authority !== null) {
+            if ($relative->authority) {
                 $target->authority = $relative->authority;
                 $target->userinfo = $relative->userinfo;
                 $target->host = $relative->host;
@@ -629,7 +664,7 @@ class Uri
                         $target->path = $this->removeDotSegments($relative->path);
                     } else {
                         if ($base->authority !== null && !$base->path) {
-                            $target->path = "/" + $relative->path;
+                            $target->path = "/" . $relative->path;
                         } else if (!$base->path) {
                             $target->path = $relative->path;
                         } else {
