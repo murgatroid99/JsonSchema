@@ -40,7 +40,7 @@
 /*jslint white: true, sub: true, onevar: true, undef: true, eqeqeq: true, newcap: true, immed: true, indent: 4 */
 namespace JsonSchema;
 include 'uri/Uri.php';
-//include 'uri/UriCache.php';
+include 'uri/UriCache.php';
 include 'JsonSchemaDraft01.php';
 function is_json_object($i)
 {
@@ -289,7 +289,7 @@ class JSONInstance
             $json = $json->getValue();
         }
         
-        if (!is_string($uri)) {
+        if (!$uri) {
             $uri = "urn:uuid:" . JSV::randomUUID() . "#";
         } else if (strpos($uri, ":") === -1) {
             $urimanager = new URI();
@@ -689,7 +689,7 @@ class Environment
      * @throws {InitializationError} If a schema that is not registered with the environment is referenced 
      */
     
-    function createSchema($data, $schema, $uri)
+    function createSchema($data, $schema = null, $uri = '')
     {
         $uri = JSV::formatURI($uri);
         
@@ -710,7 +710,9 @@ class Environment
         
         //register schema
         $this->_schemas[$instance->getUri()] = $instance;
-        $this->_schemas[$uri] = $instance;
+        if ($uri) {
+            $this->_schemas[$uri] = $instance;
+        }
         
         //build & cache the rest of the schema
         $instance->getAttributes();
@@ -741,6 +743,9 @@ class Environment
     
     function findSchema($uri)
     {
+        if (!isset($this->_schemas[JSV::formatURI($uri)])) {
+            return null;
+        }
         return $this->_schemas[JSV::formatURI($uri)];
     }
     
@@ -778,7 +783,7 @@ class Environment
     function setDefaultFragmentDelimiter($fd)
     {
         if (is_string($fd) && strlen($fd) > 0) {
-            $this->_options["defaultFragmentDelimiter"] = $fd;
+            $this->_options->defaultFragmentDelimiter = $fd;
         }
     }
     
@@ -791,7 +796,7 @@ class Environment
     
     function getDefaultFragmentDelimiter()
     {
-        return $this->_options["defaultFragmentDelimiter"];
+        return $this->_options->defaultFragmentDelimiter;
     }
     
     /**
@@ -804,7 +809,7 @@ class Environment
     function setDefaultSchemaURI($uri)
     {
         if (is_string($uri)) {
-            $this->_options["defaultSchemaURI"] = JSV::formatURI($uri);
+            $this->_options->defaultSchemaURI = JSV::formatURI($uri);
         }
     }
     
@@ -816,7 +821,7 @@ class Environment
     
     function getDefaultSchema()
     {
-        return $this->findSchema($this->_options["defaultSchemaURI"]);
+        return $this->findSchema($this->_options->defaultSchemaURI);
     }
     
     /**
@@ -1185,7 +1190,7 @@ class JSV
      */
     static function formatURI($uri)
     {
-        if ($uri[strlen($uri)-1] != '#') {
+        if ($uri && $uri[strlen($uri)-1] != '#') {
             $uri .= '#';
         }
         return $uri;
@@ -1205,7 +1210,7 @@ class JSV
         $baseType = gettype($base);
         $extraType = gettype($extra);
         
-        if ($extraType === "null") {
+        if ($extra === null) {
             if (is_object($base)) {
                 return clone $base;
             }
@@ -1217,7 +1222,7 @@ class JSV
                 }
             }
             return $base;
-        } else if ($baseType === "NULL" || $extraType !== $baseType) {
+        } else if ($base === null || $extraType !== $baseType) {
             if (is_object($extra)) {
                 return clone $extra;
             }

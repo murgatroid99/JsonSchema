@@ -141,7 +141,7 @@ class JsonSchemaDraft01
                             );
                         } else if (is_array($instance->getValue())) {
                             $parser = $self->getValueOfProperty("parser");
-                            return array_map(function ($prop) use ($parser) {
+                            return array_map(function ($prop) use ($parser, $self) {
                                 return $parser($prop, $self);
                             }, $instance->getProperties());
                         }
@@ -204,7 +204,7 @@ class JsonSchemaDraft01
                                 return $env->createSchema($instance->getProperty($arg), $selfEnv->findSchema($self->resolveURI("#")));
                             } else {
                                 $sch = $selfEnv->findSchema($self->resolveURI("#"));
-                                return array_map(function ($instance) use ($sch) {
+                                return array_map(function ($instance) use ($sch, $env) {
                                     return $env->createSchema($instance, $sch);
                                 }, $instance->getProperties());
                             }
@@ -236,7 +236,7 @@ class JsonSchemaDraft01
                     
                     "parser" => function ($instance, $self) {
                         if (is_json_object($instance->getValue())) {
-                            return $instance->getEnvironment()->createSchema($instance, $self->getEnvironment()->findSchema($selfresolveURI("#")));
+                            return $instance->getEnvironment()->createSchema($instance, $self->getEnvironment()->findSchema($self->resolveURI("#")));
                         } else if (is_array($instance->getValue())) {
                             $sch = $self->getEnvironment()->findSchema($self->resolveURI("#"));
                             return array_map(function ($instance) use ($sch){

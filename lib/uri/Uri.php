@@ -184,7 +184,7 @@ class Uri
         return "(?:" . $str . ")";
     }
 
-    static function setupRegex($cache = true)
+    static function setupRegex($cache = false)
     {
         static $done = 0;
         if ($done) return;
@@ -261,17 +261,17 @@ class Uri
         $r['SAMEDOC_REF'] = "/^" . static::subexp("\\#(" . $r['FRAGMENT'] . ")") . "?\\z/";
         $r['AUTHORITY'] = "/^" . static::subexp("(" . $r['USERINFO'] . ")@") . "?(" . $r['HOST'] . ")" . static::subexp("\\:(" . $r['PORT'] . ")") . "?\\z/";
         
-        $r['NOT_SCHEME'] = "/" . static::mergeSet("[^]", $r['ALPHA'], $r['DIGIT'], "[\\+\\-\\.]") . "/g";
-        $r['NOT_USERINFO'] = "/" . static::mergeSet("[^\\%\\:]", $r['UNRESERVED'], $r['SUB_DELIMS']) . "/g";
-        $r['NOT_HOST'] = "/" . static::mergeSet("[^\\%]", $r['UNRESERVED'], $r['SUB_DELIMS']) . "/g";
-        $r['NOT_PATH'] = "/" . static::mergeSet("[^\\%\\/\\:\\@]", $r['UNRESERVED'], $r['SUB_DELIMS']) . "/g";
-        $r['NOT_PATH_NOSCHEME'] = "/" . static::mergeSet("[^\\%\\/\\@]", $r['UNRESERVED'], $r['SUB_DELIMS']) . "/g";
-        $r['NOT_QUERY'] = "/" . static::mergeSet("[^\\%]", $r['UNRESERVED'], $r['SUB_DELIMS'], "[\\:\\@\\/\\?]") . "/g";
+        $r['NOT_SCHEME'] = "/" . static::mergeSet("[^]", $r['ALPHA'], $r['DIGIT'], "[\\+\\-\\.]") . "/";
+        $r['NOT_USERINFO'] = "/" . static::mergeSet("[^\\%\\:]", $r['UNRESERVED'], $r['SUB_DELIMS']) . "/";
+        $r['NOT_HOST'] = "/" . static::mergeSet("[^\\%]", $r['UNRESERVED'], $r['SUB_DELIMS']) . "/";
+        $r['NOT_PATH'] = "/" . static::mergeSet("[^\\%\\/\\:\\@]", $r['UNRESERVED'], $r['SUB_DELIMS']) . "/";
+        $r['NOT_PATH_NOSCHEME'] = "/" . static::mergeSet("[^\\%\\/\\@]", $r['UNRESERVED'], $r['SUB_DELIMS']) . "/";
+        $r['NOT_QUERY'] = "/" . static::mergeSet("[^\\%]", $r['UNRESERVED'], $r['SUB_DELIMS'], "[\\:\\@\\/\\?]") . "/";
         $r['NOT_FRAGMENT'] = $r['NOT_QUERY'];
-        $r['ESCAPE'] = "/" . static::mergeSet("[^]", $r['UNRESERVED'], $r['SUB_DELIMS']) . "/g";
-        $r['UNRESERVED'] = "/" . $r['UNRESERVED'] . "/g";
-        $r['OTHER_CHARS'] = "/" . static::mergeSet("[^\\%]", $r['UNRESERVED'], $r['RESERVED']) . "/g";
-        $r['PCT_ENCODEDS'] = "/" . $r['PCT_ENCODED'] . "+" . "/g";
+        $r['ESCAPE'] = "/" . static::mergeSet("[^]", $r['UNRESERVED'], $r['SUB_DELIMS']) . "/";
+        $r['UNRESERVEDREGEX'] = "/" . $r['UNRESERVED'] . "/";
+        $r['OTHER_CHARS'] = "/" . static::mergeSet("[^\\%]", $r['UNRESERVED'], $r['RESERVED']) . "/";
+        $r['PCT_ENCODEDS'] = "/" . $r['PCT_ENCODED'] . "+" . "/";
         $done = 1;
         if ($cache) {
             // save this complicated crap to a cached php file for faster loading later
@@ -489,7 +489,7 @@ class Uri
     {
         $uriTokens = array();
         
-        if ($components->userinfo !== null || $components->host !== null || is_int($components->port)) {
+        if ($components->userinfo || $components->host || is_int($components->port)) {
             if ($components->userinfo !== "") {
                 $uriTokens[] = preg_replace_callback(static::$regex['NOT_USERINFO'], array($this, 'pctEncChar'), $components->userinfo);
                 $uriTokens[] = "@";
@@ -525,10 +525,12 @@ class Uri
             } elseif ($input === "." || $input === "..") {
                 $input = "";
             } else {
-                preg_match_all(static::$regex['RDS5'], $input, $matches);
-                $s = $matches[0];
-                $input = array_slice($input, count($s));
-                array_push($output, $s);
+                preg_match(static::$regex['RDS5'], $input, $matches);
+                $output[] = $matches[0];
+                $input = substr($input, strlen($matches[0]));
+                if (!$input) {
+                    $input = '';
+                }
             }
         }
         
@@ -541,19 +543,14 @@ class Uri
      * @returns {String}
      */
     
-    function serialize(Components $components, Options $options) {
+    function serialize(Components $components, Options $options = null)
+    {
         $uriTokens = array(); 
 
         if (null === $options) {
             $options = $this->options;
         }
         
-        //check if a handler for the scheme exists
-        $schemeHandler = static::$SCHEMES[$components->scheme ? $components->scheme : $options->scheme];
-        if ($schemeHandler && method_exists($schemeHandler, 'parse')) {
-            //perform extra parsing
-            $components = $schemeHandler->parse($components, $options);
-        }
         //check if a handler for the scheme exists
         if (isset(static::$SCHEMES[$components->scheme ? $components->scheme : $options->scheme])) {
             $schemeHandler = static::$SCHEMES[$components->scheme ? $components->scheme : $options->scheme];
@@ -589,8 +586,9 @@ class Uri
             }
             
             if ($components->authority === null) {
-                if (strlen($s) > 1 && $s[0] == '/' && $s[1] == '/')
-                $s = '/%2F' . substr($s, 2);  //don't allow the path to start with "//"
+                if (strlen($s) > 1 && $s[0] == '/' && $s[1] == '/') {
+                    $s = '/%2F' . substr($s, 2);  //don't allow the path to start with "//"
+                }
             }
             $uriTokens[] = $s;
         }
@@ -605,7 +603,7 @@ class Uri
             $uriTokens[] = preg_replace_callback(static::$regex['NOT_FRAGMENT'], array($this, 'pctEncChar'), $components->fragment);
         }
         
-        return preg_replace_callback('/%[0-9A-Fa-f]{2}/g', function ($matches) {  //uppercase percent encoded characters
+        return preg_replace_callback('/%[0-9A-Fa-f]{2}/', function ($matches) {  //uppercase percent encoded characters
                 return strtoupper($matches[0]);
             },
             preg_replace_callback(
@@ -654,7 +652,7 @@ class Uri
             } else {
                 if (!$relative->path) {
                     $target->path = $base->path;
-                    if ($relative->query !== null) {
+                    if ($relative->query) {
                         $target->query = $relative->query;
                     } else {
                         $target->query = $base->query;
