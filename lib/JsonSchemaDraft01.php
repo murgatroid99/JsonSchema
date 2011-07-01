@@ -756,6 +756,9 @@ class JsonSchemaDraft01
                 }
                 
                 for ($x = 0, $xl = count($propNames); $x < $xl; ++$x) {
+                    if (!isset($attributeSchemas[$propNames[$x]])) {
+                        continue;
+                    }
                     $validator = $attributeSchemas[$propNames[$x]]->getValueOfProperty("validator");
                     if (is_callable($validator)) {
                         $validator($instance, $schema, $attributeSchemas[$propNames[$x]], $report, $parent, $parentSchema, $name);
