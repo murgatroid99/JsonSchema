@@ -666,7 +666,7 @@ class Uri
                         } else if (!$base->path) {
                             $target->path = $relative->path;
                         } else {
-                            $target->path = substr($base->path, 0, strrpos($base.path, "/") + 1) . $relative->path;
+                            $target->path = substr($base->path, 0, strrpos($base->path, "/") + 1) . $relative->path;
                         }
                         $target->path = $this->removeDotSegments($target->path);
                     }
