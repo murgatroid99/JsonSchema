@@ -154,7 +154,7 @@ class JsonSchemaDraft01
                         settype($requiredTypes, 'array');
                         
                         //for instances that are required to be a certain type
-                        if ($instance !== null && $requiredTypes && count($requiredTypes)) {
+                        if ($instance->getValue() !== null && $requiredTypes && count($requiredTypes)) {
                             $typeValidators = $self->getValueOfProperty("typeValidators");
                             if (!$typeValidators) {
                                 $typeValidators = array();
