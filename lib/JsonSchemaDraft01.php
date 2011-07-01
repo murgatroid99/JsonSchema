@@ -356,7 +356,7 @@ class JsonSchemaDraft01
                             $requires = $schema->getAttribute("requires");
                             if (is_string($requires)) {
                                 if ($parent->getProperty($requires)->getValue() === null) {
-                                    $report->addError($instance, $schema, "requires", 'Property requires sibling property "' + $requires + '"',
+                                    $report->addError($instance, $schema, "requires", 'Property requires sibling property "' . $requires . '"',
                                                       $requires);
                                 }
                             } else if ($requires instanceof JSONSchema) {
@@ -750,7 +750,7 @@ class JsonSchemaDraft01
                 $attributeSchemas = $self->getAttribute("properties");
                 
                 foreach ($attributeSchemas as $x => $val) {
-                    if ($attributeSchemas[$x]->getValueOfProperty("validationRequired")) {
+                    if ($val->getValueOfProperty("validationRequired")) {
                         JSV::pushUnique($propNames, $x);
                     }
                 }
@@ -840,7 +840,7 @@ class JsonSchemaDraft01
                         }
                         
                         if (isset($arg[1])) {
-                            $links = array_map(function ($link)  use ($arg) {
+                            $links = array_map(function ($link) use ($arg) {
                                 $value = null;
                                 $instance = $arg[1];
                                 $href = $link["href"];
