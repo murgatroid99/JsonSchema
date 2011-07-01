@@ -1325,4 +1325,4 @@ class JSV
 }
 new JsonSchemaDraft01;
 $env = JSV::createEnvironment("json-schema-draft-01");
-echo $env->validate(array(), array('type' => 'array'))->errors[0];
+echo $env->validate(new \stdClass, array('type' => 'array'))->errors[0];

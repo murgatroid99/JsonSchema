@@ -62,6 +62,10 @@ class JsonSchemaDraft01
         $this->HYPERSCHEMA = $this->ENVIRONMENT->createSchema($this->HYPERSCHEMA->getValue(), $this->HYPERSCHEMA, "http://json-schema.org/hyper-schema#");
         $this->LINKS = $this->ENVIRONMENT->createSchema($this->LINKS->getValue(), $this->HYPERSCHEMA, "http://json-schema.org/links#");
     
+    }
+
+    function registerSchemas()
+    {
         JSV::registerEnvironment("json-schema-draft-00", $this->ENVIRONMENT);
         JSV::registerEnvironment("json-schema-draft-01", JSV::createEnvironment("json-schema-draft-00"));
         
@@ -114,9 +118,9 @@ class JsonSchemaDraft01
         $this->ENVIRONMENT->setOption("defaultSchemaURI", "http://json-schema.org/schema#");  //updated later
     }
 
-    function initializeSchema()
+    protected function getSchemaArray()
     {
-        $this->SCHEMA = $this->ENVIRONMENT->createSchema(array(
+        return array(
             '$schema' => "http://json-schema.org/hyper-schema#",
             "id" => "http://json-schema.org/schema#",
             "type" => "object",
@@ -636,7 +640,7 @@ class JsonSchemaDraft01
                     },
                     
                     "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
-                        if (is_numeric($instance->getValue())) {
+                        if (is_int($instance->getValue())) {
                             $maxDecimal = $schema->getAttribute("maxDecimal");
                             if (is_numeric($maxDecimal)) {
                                 $decimals = explode('.', ($instance->getValue() + 0) . '');
@@ -803,12 +807,17 @@ class JsonSchemaDraft01
                 
                 return $instance;
             }
-        ), true, "http://json-schema.org/schema#");
+        );
     }
 
-    function initializeHyperSchema()
+    function initializeSchema()
     {
-        $this->HYPERSCHEMA = $this->ENVIRONMENT->createSchema(JSV::inherits($this->SCHEMA, $this->ENVIRONMENT->createSchema(array(
+        $this->SCHEMA = $this->ENVIRONMENT->createSchema($this->getSchemaArray(), true, "http://json-schema.org/schema#");
+    }
+
+    protected function getHyperSchemaArray()
+    {
+        return array(
             '$schema' => "http://json-schema.org/hyper-schema#",
             "id" => "http://json-schema.org/hyper-schema#",
         
@@ -932,14 +941,22 @@ class JsonSchemaDraft01
             
             //not needed as JSV->inherits does the job for us
             //"extends" => array('$ref' => "http://json-schema.org/schema#"}
-        ), $this->SCHEMA), true), true, "http://json-schema.org/hyper-schema#");
+        );
+    }
+
+    function initializeHyperSchema()
+    {
+        $this->HYPERSCHEMA = $this->ENVIRONMENT->createSchema(JSV::inherits($this->SCHEMA,
+                                                                            $this->ENVIRONMENT->createSchema($this->getHyperSchemaArray(),
+                                                                                                             $this->SCHEMA), true), true,
+                                                              "http://json-schema.org/hyper-schema#");
         
         $this->ENVIRONMENT->setOption("defaultSchemaURI", "http://json-schema.org/hyper-schema#");
     }
 
-    function initializeLinks()
+    function getLinksArray()
     {
-        $this->LINKS = $this->ENVIRONMENT->createSchema(array(
+        return array(
             '$schema' => "http://json-schema.org/hyper-schema#",
             "id" => "http://json-schema.org/links#",
             "type" => "object",
@@ -1007,6 +1024,64 @@ class JsonSchemaDraft01
                 }
                 return $instance->getValue();
             }
-        ), HYPERSCHEMA, "http://json-schema.org/links#");
-    }    
+        );
+    }
+    function initializeLinks()
+    {
+        $this->LINKS = $this->ENVIRONMENT->createSchema($this->getLinksArray(), HYPERSCHEMA, "http://json-schema.org/links#");
+    }
+
+    /**
+     * if the search path key is the same as newkey, we will instead replace the schema item
+     * if $before is set to the string "replace" we will remove the old key and replace it with the new one
+     */
+    function insert($schema, $path, $newkey, $newvalue, $before = true, $origpath = '')
+    {
+        if (!$origpath) {
+            $origpath = $path;
+        }
+        if (strpos($path, '/')) {
+            // still have to traverse deeper in the tree
+            $path = explode('/', $path);
+            $marker = array_shift($path);
+            $path = implode('/', $path);
+            $newschema = array();
+            $found = false;
+            foreach ($schema as $key => $value) {
+                if ($key == $marker) {
+                    $found = true;
+                    $newschema[$key] = $this->insert($value, $path, $newkey, $newvalue, $before, $origpath);
+                    continue;
+                }
+                $newschema[$key] = $value;
+            }
+            if (!$found) {
+                throw new Exception('Error: path key ' . $marker . ' was not found in ' . $path . ' component of ' . $origpath);
+            }
+            return $newschema;
+        }
+        // this is where we will insert
+        $newschema = array();
+        foreach ($schema as $key => $value) {
+            if ($key != $path) {
+                $newschema[$key] = $value;
+                continue;
+            }
+            if ($key == $newkey || $before = 'replace') {
+                $newschema[$key] = $newvalue;
+                continue;
+            }
+            if ($before) {
+                $newschema[$newkey] = $newvalue;
+                $newschema[$key] = $value;
+            } else {
+                $newschema[$key] = $value;
+                $newschema[$newkey] = $newvalue;
+            }
+        }
+        if (!$found) {
+            throw new Exception('Error: path key ' . $path . ' was not found in ' . $path . ' component of ' . $origpath);
+        }
+        return $newschema;
+    }
 }
