@@ -291,7 +291,7 @@ class JsonSchemaDraft01
                     },
                     
                     "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
-                        if ($instance === null && !$schema->getAttribute("optional")) {
+                        if ($instance->getValue() === null && !$schema->getAttribute("optional")) {
                             $report->addError($instance, $schema, "optional", "Property is required", false);
                         }
                     },
@@ -751,7 +751,7 @@ class JsonSchemaDraft01
                 
                 foreach ($attributeSchemas as $x => $val) {
                     if ($val->getValueOfProperty("validationRequired")) {
-                        JSV::pushUnique($propNames, $x);
+                        $propNames = JSV::pushUnique($propNames, $x);
                     }
                 }
                 

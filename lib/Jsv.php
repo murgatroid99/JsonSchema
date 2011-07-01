@@ -56,6 +56,7 @@ function is_json_object($i)
         }
         return false;
     }
+    return false;
 }
 function is_json_array($i)
 {
@@ -68,6 +69,7 @@ function is_json_array($i)
         }
         return true;
     }
+    return true;
 }
 //class Exception extends \Exception {}
 /**
