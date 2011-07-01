@@ -177,7 +177,7 @@ class Report
      */
     protected $schemaSchema;
 
-    private $_checkVars = array('instance' => 1, 'schema' => 1, 'schemaSchema' => 1, 'validated' => 1);
+    private $_checkVars = array('instance' => 1, 'schema' => 1, 'schemaSchema' => 1, 'validated' => 1, 'errors' => 1);
 
     function __clone()
     {
@@ -246,7 +246,7 @@ class Report
     
     function isValidatedBy($uri, $schemaUri)
     {
-        return isset($this->validated[$uri]) && in_array($this->validated[$uri], $schemaUri);
+        return isset($this->validated[$uri]) && in_array($schemaUri, $this->validated[$uri]);
     }
 }
     
@@ -340,6 +340,9 @@ class JSONInstance
     
     function getPropertyNames()
     {
+        if ($this->_value === null) {
+            return array();
+        }
         return array_keys($this->_value);
     }
     
@@ -1320,4 +1323,4 @@ class JSV
 }
 new JsonSchemaDraft01;
 $env = JSV::createEnvironment("json-schema-draft-01");
-$env->validate(new \stdClass);
+echo $env->validate(array())->errors[0];

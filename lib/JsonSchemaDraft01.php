@@ -133,7 +133,7 @@ class JsonSchemaDraft01
                     
                     "parser" => function (JSONInstance $instance, $self) {
                         if (is_string($instance->getValue())) {
-                            return $instance;
+                            return $instance->getValue();
                         } else if (is_json_object($instance->getValue())) {
                             return $instance->getEnvironment()->createSchema(
                                 $instance, 
@@ -169,7 +169,7 @@ class JsonSchemaDraft01
                                         return true;  //instance matches this schema
                                     }
                                 } else {
-                                    if (is_callable($typeValidators[$type])) {
+                                    if (is_string($type) && isset($typeValidators[$type]) && is_callable($typeValidators[$type])) {
                                         if ($typeValidators[$type]($instance, $report)) {
                                             return true;  //type is valid
                                         }
@@ -218,7 +218,7 @@ class JsonSchemaDraft01
                         if (is_json_object($instance->getValue())) {
                             //for each property defined in the schema
                             $propertySchemas = $schema->getAttribute("properties");
-                            foreach (propertySchemas as $key => $val) {
+                            foreach ($propertySchemas as $key => $val) {
                                 if ($val) {
                                     //ensure that instance property is valid
                                     $val->validate($instance->getProperty($key), $report, $instance, $schema, $key);
