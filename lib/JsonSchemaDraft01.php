@@ -49,7 +49,7 @@ class JsonSchemaDraft01
         $HYPERSCHEMA,
         $LINKS;
 
-    function __construct()
+    function __construct($register = true)
     {
         $this->initializeTypeValidators();
         $this->initializeEnvironment();
@@ -58,10 +58,13 @@ class JsonSchemaDraft01
         $this->initializeLinks();
 
         //We need to reinitialize these 3 schemas as they all reference each other
-        $this->SCHEMA = $this->ENVIRONMENT->createSchema($this->SCHEMA->getValue(), $this->HYPERSCHEMA, "http://json-schema.org/schema#");
-        $this->HYPERSCHEMA = $this->ENVIRONMENT->createSchema($this->HYPERSCHEMA->getValue(), $this->HYPERSCHEMA, "http://json-schema.org/hyper-schema#");
-        $this->LINKS = $this->ENVIRONMENT->createSchema($this->LINKS->getValue(), $this->HYPERSCHEMA, "http://json-schema.org/links#");
-    
+        if ($register) {
+            $this->SCHEMA = $this->ENVIRONMENT->createSchema($this->SCHEMA->getValue(), $this->HYPERSCHEMA, "http://json-schema.org/schema#");
+            $this->HYPERSCHEMA = $this->ENVIRONMENT->createSchema($this->HYPERSCHEMA->getValue(), $this->HYPERSCHEMA, "http://json-schema.org/hyper-schema#");
+            $this->LINKS = $this->ENVIRONMENT->createSchema($this->LINKS->getValue(), $this->HYPERSCHEMA, "http://json-schema.org/links#");
+
+            $this->registerSchemas();
+        }
     }
 
     function registerSchemas()
