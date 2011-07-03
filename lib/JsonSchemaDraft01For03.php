@@ -107,71 +107,23 @@ class JsonSchemaDraft01For03 extends JsonSchemaDraft01
     function getSchemaArray()
     {
         $schema = parent::getSchemaArray();
-        $this->insert($schema, 'properties/pattern', 'uniqueItems', array(
-				"type" => "boolean",
-				"optional" => true,
-				"default" => false,
-				
-				"parser" => function ($instance, $self) {
-					return (bool) $instance->getValue();
-				},
-				
-				"validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
-					if (is_json_array($instance->getValue()) && $schema->getAttribute("uniqueItems")) {
-						$value = $instance->getProperties();
-						for ($x = 0, $xl = count($value) - 1; $x < $xl; ++$x) {
-							for ($y = $x + 1, $yl = count($value); $y < $yl; ++$y) {
-								if ($value[$x]->equals($value[$y])) {
-									$report->addError($instance, $schema, "uniqueItems", "Array can only contain unique items",
-                                                      array('x' => $x, 'y' => $y));
-								}
-							}
-						}
-					}
-				}
-			));
-        $this->insert($schema, 'properties/maxDecimal', 'divisibleBy', array(
-                    "type" => "number", // was integer
-                    "minimum" => 0,
-
-                    "minimumCanEqual" => false, // new constraint
-                    "optional" => true,
-                                    
-                    "parser" => function ($instance, $self) {
-                        if (is_numeric($instance->getValue())) {
-                            return $instance->getValue();
-                        }
-                    },
-                    
-                    "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
-                        if (is_numeric($instance->getValue())) {
-                            $divisor = $schema->getAttribute("divisibleBy");
-                            if ($divisor === 0) {
-                                $report->addError($instance, $schema, "divisibleBy", "Nothing is divisible by 0", $divisor);
-                            } elseif ($divisor !== 1 && (($instance->getValue() / $divisor) % 1) !== 0) {
-                                $report->addError($instance, $schema, "divisibleBy", "Number is not divisible by " . $divisor, $divisor);
-                            }
-                        }
-                    }
-                ), 'replace');
-        $schema['fragmentResolution'] = 'slash-delimited';
+        $schema['$schema'] = "http://json-schema.org/draft-00/hyper-schema#";
+        $schema['id'] = "http://json-schema.org/draft-00/schema#";
         return $schema;
     }
 
     function getHyperSchemaArray()
     {
         $schema = parent::getHyperSchemaArray();
-        $schema['properties']['fragmentResolution']['default'] = 'slash-delimited'; // was dot-delimited
+        $schema['$schema'] = "http://json-schema.org/draft-00/hyper-schema#";
+        $schema['id'] = "http://json-schema.org/draft-00/hyper-schema#";
     }
 
     function getLinksArray()
     {
         $schema = parent::getLinksArray();
-        $this->insert($schema, 'properties/method', 'targetSchema', array(
-				'$ref' => "hyper-schema#",
-				
-				//need this here because parsers are run before links are resolved
-				"parser" => $this->HYPERSCHEMA->getAttribute("parser")
-			));
+        $schema['$schema'] = "http://json-schema.org/draft-00/hyper-schema#";
+        $schema['id'] = "http://json-schema.org/draft-00/links#";
+        return $schema;
     }
 }

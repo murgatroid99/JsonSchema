@@ -122,5 +122,6 @@ class JsonSchemaDraft02 extends JsonSchemaDraft01
 				//need this here because parsers are run before links are resolved
 				"parser" => $this->HYPERSCHEMA->getAttribute("parser")
 			));
+        return $schema;
     }
 }
