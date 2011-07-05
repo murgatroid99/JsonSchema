@@ -59,16 +59,16 @@ class JsonSchemaDraft01
 
         //We need to reinitialize these 3 schemas as they all reference each other
         if ($register) {
-            $this->SCHEMA = $this->ENVIRONMENT->createSchema($this->SCHEMA->getValue(), $this->HYPERSCHEMA, "http://json-schema.org/schema#");
-            $this->HYPERSCHEMA = $this->ENVIRONMENT->createSchema($this->HYPERSCHEMA->getValue(), $this->HYPERSCHEMA, "http://json-schema.org/hyper-schema#");
-            $this->LINKS = $this->ENVIRONMENT->createSchema($this->LINKS->getValue(), $this->HYPERSCHEMA, "http://json-schema.org/links#");
-
             $this->registerSchemas();
         }
     }
 
     function registerSchemas()
     {
+        $this->SCHEMA = $this->ENVIRONMENT->createSchema($this->SCHEMA->getValue(), $this->HYPERSCHEMA, "http://json-schema.org/schema#");
+        $this->HYPERSCHEMA = $this->ENVIRONMENT->createSchema($this->HYPERSCHEMA->getValue(), $this->HYPERSCHEMA, "http://json-schema.org/hyper-schema#");
+        $this->LINKS = $this->ENVIRONMENT->createSchema($this->LINKS->getValue(), $this->HYPERSCHEMA, "http://json-schema.org/links#");
+
         JSV::registerEnvironment("json-schema-draft-00", $this->ENVIRONMENT);
         JSV::registerEnvironment("json-schema-draft-01", JSV::createEnvironment("json-schema-draft-00"));
         
@@ -813,9 +813,9 @@ class JsonSchemaDraft01
         );
     }
 
-    function initializeSchema()
+    function initializeSchema($uri = "http://json-schema.org/schema#")
     {
-        $this->SCHEMA = $this->ENVIRONMENT->createSchema($this->getSchemaArray(), true, "http://json-schema.org/schema#");
+        $this->SCHEMA = $this->ENVIRONMENT->createSchema($this->getSchemaArray(), true, $uri);
     }
 
     protected function getHyperSchemaArray()
@@ -947,14 +947,14 @@ class JsonSchemaDraft01
         );
     }
 
-    function initializeHyperSchema()
+    function initializeHyperSchema($uri1 = '', $uri2 = "http://json-schema.org/hyper-schema#")
     {
         $this->HYPERSCHEMA = $this->ENVIRONMENT->createSchema(JSV::inherits($this->SCHEMA,
                                                                             $this->ENVIRONMENT->createSchema($this->getHyperSchemaArray(),
-                                                                                                             $this->SCHEMA), true), true,
-                                                              "http://json-schema.org/hyper-schema#");
+                                                                                                             $this->SCHEMA, $uri1), true), true,
+                                                              $uri2);
         
-        $this->ENVIRONMENT->setOption("defaultSchemaURI", "http://json-schema.org/hyper-schema#");
+        $this->ENVIRONMENT->setOption("defaultSchemaURI", $uri2);
     }
 
     function getLinksArray()
@@ -1029,9 +1029,9 @@ class JsonSchemaDraft01
             }
         );
     }
-    function initializeLinks()
+    function initializeLinks($uri = "http://json-schema.org/links#")
     {
-        $this->LINKS = $this->ENVIRONMENT->createSchema($this->getLinksArray(), HYPERSCHEMA, "http://json-schema.org/links#");
+        $this->LINKS = $this->ENVIRONMENT->createSchema($this->getLinksArray(), HYPERSCHEMA, $uri);
     }
 
     /**

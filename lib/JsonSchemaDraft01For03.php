@@ -43,65 +43,61 @@ namespace JsonSchema;
 
 class JsonSchemaDraft01For03 extends JsonSchemaDraft01
 {
-    var $SCHEMA_00, $HYPERSCHEMA_00, $LINKS_00;
-    function __construct()
+    function initializeSchema($uri = "http://json-schema.org/draft-00/schema#")
     {
-        $this->registerSchemas();
+        return parent::initializeSchema($uri);
+    }
+
+    function initializeHyperSchema($uri1 = "http://json-schema.org/draft-00/hyper-schema#", $uri2 = "http://json-schema.org/draft-00/hyper-schema#")
+    {
+        return parent::initializeHyperSchema($uri1, $uri2);
+    }
+
+    function initializeLinks($uri = "http://json-schema.org/draft-00/links#")
+    {
+        return parent::initializeLinks($uri);
     }
 
     function registerSchemas()
     {
-        $this->ENVIRONMENT->setOption("defaultFragmentDelimiter", ".");
-        $this->ENVIRONMENT->setOption("defaultSchemaURI", "http://json-schema.org/draft-00/schema#");  //updated later
-        
-        $this->SCHEMA_00 = $this->ENVIRONMENT->createSchema($this->getSchemaArray(), true, "http://json-schema.org/draft-00/schema#");
-        $this->HYPERSCHEMA_00 = $this->ENVIRONMENT->createSchema(JSV::inherits($this->SCHEMA_00,
-                                                                               $this->ENVIRONMENT
-                                                                               ->createSchema($this->getHyperSchemaArray(), true,
-                                                                                              "http://json-schema.org/draft-00/hyper-schema#"),
-                                                                               true), true, "http://json-schema.org/draft-00/hyper-schema#");
-        
-        $this->ENVIRONMENT->setOption("defaultSchemaURI", "http://json-schema.org/draft-00/hyper-schema#");
-        
-        $this->LINKS_00 = $this->ENVIRONMENT->createSchema($this->getLinksArray(), $this->HYPERSCHEMA_00, "http://json-schema.org/draft-00/links#");
-        
         //We need to reinitialize these 3 schemas as they all reference each other
-        $this->SCHEMA_00 = $this->ENVIRONMENT->createSchema($this->SCHEMA_00->getValue(), $this->HYPERSCHEMA_00, "http://json-schema.org/draft-00/schema#");
-        $this->HYPERSCHEMA_00 = $this->ENVIRONMENT->createSchema($this->HYPERSCHEMA_00->getValue(), $this->HYPERSCHEMA_00, "http://json-schema.org/draft-00/hyper-schema#");
-        $this->LINKS_00 = $this->ENVIRONMENT->createSchema($this->LINKS_00->getValue(), $this->HYPERSCHEMA_00, "http://json-schema.org/draft-00/links#");
+        $this->SCHEMA = $this->ENVIRONMENT->createSchema($this->SCHEMA->getValue(), $this->HYPERSCHEMA, "http://json-schema.org/draft-00/schema#");
+        $this->HYPERSCHEMA = $this->ENVIRONMENT->createSchema($this->HYPERSCHEMA->getValue(), $this->HYPERSCHEMA, "http://json-schema.org/draft-00/hyper-schema#");
+        $this->LINKS = $this->ENVIRONMENT->createSchema($this->LINKS->getValue(), $this->HYPERSCHEMA, "http://json-schema.org/draft-00/links#");
         
         //
         // draft-01
         //
-            
-        SCHEMA_01_JSON = JSV.inherits(SCHEMA_00_JSON, {
-            "$schema" : "http://json-schema.org/draft-01/hyper-schema#",
-            "id" : "http://json-schema.org/draft-01/schema#"
-        });
+        $SCHEMA_01_JSON = parent::getSchemaArray();
+        $SCHEMA_01_JSON['$schema'] = "http://json-schema.org/draft-01/hyper-schema#";
+        $SCHEMA_01_JSON['id'] = "http://json-schema.org/draft-01/schema#";
         
-        HYPERSCHEMA_01_JSON = JSV.inherits(HYPERSCHEMA_00_JSON, {
-            "$schema" : "http://json-schema.org/draft-01/hyper-schema#",
-            "id" : "http://json-schema.org/draft-01/hyper-schema#"
-        });
+        $HYPERSCHEMA_01_JSON = parent::getHyperSchemaArray();
+        $HYPERSCHEMA_01_JSON['$schema'] = "http://json-schema.org/draft-01/hyper-schema#";
+        $HYPERSCHEMA_01_JSON['id'] = "http://json-schema.org/draft-01/hyper-schema#";
         
-        LINKS_01_JSON = JSV.inherits(LINKS_00_JSON, {
-            "$schema" : "http://json-schema.org/draft-01/hyper-schema#",
-            "id" : "http://json-schema.org/draft-01/links#"
-        });
+        $LINKS_01_JSON = parent::getLinksArray();
+        $LINKS_01_JSON['$schema'] = "http://json-schema.org/draft-00/hyper-schema#";
+        $LINKS_01_JSON['id'] = "http://json-schema.org/draft-00/links#";
         
-        ENVIRONMENT.setOption("defaultSchemaURI", "http://json-schema.org/draft-01/schema#");  //update later
+        $this->ENVIRONMENT->setOption("defaultSchemaURI", "http://json-schema.org/draft-01/schema#");  //update later
         
-        SCHEMA_01 = ENVIRONMENT.createSchema(SCHEMA_01_JSON, true, "http://json-schema.org/draft-01/schema#");
-        HYPERSCHEMA_01 = ENVIRONMENT.createSchema(JSV.inherits(SCHEMA_01, ENVIRONMENT.createSchema(HYPERSCHEMA_01_JSON, true, "http://json-schema.org/draft-01/hyper-schema#"), true), true, "http://json-schema.org/draft-01/hyper-schema#");
+        $this->SCHEMA = $this->ENVIRONMENT->createSchema($SCHEMA_01_JSON, true, "http://json-schema.org/draft-01/schema#");
+        $this->HYPERSCHEMA = $this->ENVIRONMENT->createSchema(JSV::inherits($this->SCHEMA,
+                                                                            $this->ENVIRONMENT->createSchema($HYPERSCHEMA_01_JSON,
+                                                                                                             true,
+                                                                                        "http://json-schema.org/draft-01/hyper-schema#"),
+                                                                            true), true, "http://json-schema.org/draft-01/hyper-schema#");
         
-        ENVIRONMENT.setOption("defaultSchemaURI", "http://json-schema.org/draft-01/hyper-schema#");
+        $this->ENVIRONMENT->setOption("defaultSchemaURI", "http://json-schema.org/draft-01/hyper-schema#");
         
-        LINKS_01 = ENVIRONMENT.createSchema(LINKS_01_JSON, HYPERSCHEMA_01, "http://json-schema.org/draft-01/links#");
+        $this->LINKS = $this->ENVIRONMENT->createSchema($LINKS_01_JSON, $this->HYPERSCHEMA, "http://json-schema.org/draft-01/links#");
         
         //We need to reinitialize these 3 schemas as they all reference each other
-        SCHEMA_01 = ENVIRONMENT.createSchema(SCHEMA_01.getValue(), HYPERSCHEMA_01, "http://json-schema.org/draft-01/schema#");
-        HYPERSCHEMA_01 = ENVIRONMENT.createSchema(HYPERSCHEMA_01.getValue(), HYPERSCHEMA_01, "http://json-schema.org/draft-01/hyper-schema#");
-        LINKS_01 = ENVIRONMENT.createSchema(LINKS_01.getValue(), HYPERSCHEMA_01, "http://json-schema.org/draft-01/links#");
+        $this->SCHEMA = $this->ENVIRONMENT->createSchema($this->SCHEMA->getValue(), $this->HYPERSCHEMA, "http://json-schema.org/draft-01/schema#");
+        $this->HYPERSCHEMA = $this->ENVIRONMENT->createSchema($this->HYPERSCHEMA->getValue(), $this->HYPERSCHEMA,
+                                                              "http://json-schema.org/draft-01/hyper-schema#");
+        $this->LINKS = $this->ENVIRONMENT->createSchema($this->LINKS->getValue(), $this->HYPERSCHEMA, "http://json-schema.org/draft-01/links#");
     }
 
     function getSchemaArray()

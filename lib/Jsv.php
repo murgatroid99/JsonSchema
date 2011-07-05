@@ -950,6 +950,12 @@ class Environment
     {
         return $this->_schemas;
     }
+
+    // hack do not use unless you are Gary Court or porting his work
+    function replaceSchema($uri, JSONSchema $schema)
+    {
+        $this->_schemas[$uri] = $schema;
+    }
 }
     
     /**
@@ -1321,6 +1327,32 @@ class JSV
             $newObj[$key] = self::dirtyClone($val);
         }
         return $newObj;
+	}
+
+    static function getMatchedPatternProperties($instance, $schema, $report, $self)
+    {
+		$matchedProperties = array();
+		
+		if (is_json_object($instance.getValue())) {
+			$patternProperties = $schema->getAttribute("patternProperties");
+			$properties = $instance->getProperties();
+			foreach ($patternProperties as $pattern => $patproperty) {
+                if (!@preg_match($pattern, '')) {
+                    if ($report) {
+                        $report->addError($schema, $self, "patternProperties", "Invalid pattern", $pattern);
+                    }
+                }
+                foreach ($properties as $key => $property) {
+                    if (preg_match($pattern, $key)) {
+                        $matchedProperties[$key] = isset($matchedProperties[$key]) ?
+                            JSV::pushUnique($matchedProperties[$key], $patproperty) :
+                            array($patproperty);
+                    }
+                }
+			}
+		}
+		
+		return $matchedProperties;
 	}
 }
 new JsonSchemaDraft01;

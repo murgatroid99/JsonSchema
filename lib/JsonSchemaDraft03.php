@@ -43,11 +43,7 @@ namespace JsonSchema;
 
 class JsonSchemaDraft03 extends JsonSchemaDraft02
 {
-    var $ENVIRONMENT,
-        $TYPE_VALIDATORS,
-        $SCHEMA,
-        $HYPERSCHEMA,
-        $LINKS,
+    var
         $draft1,
         $draft2;
 
@@ -55,33 +51,458 @@ class JsonSchemaDraft03 extends JsonSchemaDraft02
     {
         $this->draft1 = new JsonSchemaDraft01For03();
         $this->draft2 = new JsonSchemaDraft02For03();
-        $this->initializeTypeValidators();
-        $this->initializeEnvironment();
-        $this->initializeSchema();
-        $this->initializeHyperSchema();
-        $this->initializeLinks();
-    
-        if ($register) {
-            $this->registerSchemas();
-        }
+
+        $this->ENVIRONMENT->setOption("validateReferences", true);
+        $this->ENVIRONMENT->setOption("defaultSchemaURI", "http://json-schema.org/draft-03/schema#");  //update later
+        
+        //prevent reference errors
+        $this->ENVIRONMENT->createSchema(array(), true, "http://json-schema.org/draft-03/schema#");
+        $this->ENVIRONMENT->createSchema(array(), true, "http://json-schema.org/draft-03/hyper-schema#");
+        $this->ENVIRONMENT->createSchema(array(), true, "http://json-schema.org/draft-03/links#");
+
+        return parent::__construct($register);
+    }
+
+    function initializeSchema($uri = "http://json-schema.org/draft-03/schema#")
+    {
+        return parent::initializeSchema($uri);
+    }
+
+    function initializeHyperSchema($uri1 = "http://json-schema.org/draft-03/hyper-schema#", $uri2 = "http://json-schema.org/draft-03/hyper-schema#")
+    {
+        return parent::initializeHyperSchema($uri1, $uri2);
+    }
+
+    function initializeLinks($uri = "http://json-schema.org/draft-03/links#")
+    {
+        return parent::initializeLinks($uri);
     }
 
     function registerSchemas()
-    {	
+    {
+        //We need to reinitialize these schemas as they reference each other
+        $this->HYPERSCHEMA = $this->ENVIRONMENT->createSchema($this->HYPERSCHEMA->getValue(), $this->HYPERSCHEMA,
+                                                              "http://json-schema.org/draft-03/hyper-schema#");
+        
+        $this->ENVIRONMENT->setOption("latestJSONSchemaSchemaURI", "http://json-schema.org/draft-03/schema#");
+        $this->ENVIRONMENT->setOption("latestJSONSchemaHyperSchemaURI", "http://json-schema.org/draft-03/hyper-schema#");
+        $this->ENVIRONMENT->setOption("latestJSONSchemaLinksURI", "http://json-schema.org/draft-03/links#");
+        
+        //
+        //Latest JSON Schema
+        //
+        
+        //Hack, but WAY faster then instantiating a new schema
+        $this->ENVIRONMENT->replaceSchema("http://json-schema.org/schema#", $this->SCHEMA);
+        $this->ENVIRONMENT->replaceSchema("http://json-schema.org/hyper-schema#", $this->HYPERSCHEMA);
+        $this->ENVIRONMENT->replaceSchema("http://json-schema.org/links#", $this->LINKS);
+        
+        //
+        //register environment
+        //
+        
+        JSV::registerEnvironment("json-schema-draft-03", $this->ENVIRONMENT);
+        if (!JSV::getDefaultEnvironmentID() || JSV::getDefaultEnvironmentID() === "json-schema-draft-01"
+            || JSV::getDefaultEnvironmentID() === "json-schema-draft-02") {
+            JSV::setDefaultEnvironmentID("json-schema-draft-03");
+        }
+    }
 
-        ENVIRONMENT.setOption("defaultFragmentDelimiter", "/");
-        ENVIRONMENT.setOption("defaultSchemaURI", "http://json-schema.org/draft-02/schema#");  //update later
+    function getSchemaArray()
+    {
+        $properties = $this->draft2->SCHEMA->getValueOfProperty("properties");
+        $propertiesparser = $properties["properties"]["parser"];
+        $additionalparser = $properties["additionalProperties"]["parser"];
+        $SCHEMA_02_JSON = $this->draft2->getSchemaArray();
+        $disallowparser = $SCHEMA_02_JSON["properties"]["type"]["parser"];
+        return JSV::inherits($this->draft2->getSchemaArray(), array(
+            '$schema' => "http://json-schema.org/draft-03/schema#",
+            "id" => "http://json-schema.org/draft-03/schema#",
+            
+            "properties" => array(
+                "patternProperties" => array(
+                    "type" => "object",
+                    "additionalProperties" => array('$ref' => "#"),
+                    "default" => new \stdClass,
+                    
+                    "parser" => $propertiesparser,
+                    
+                    "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
+                        if (is_json_object($instance->getValue())) {
+                            $matchedProperties = JSV::getMatchedPatternProperties($instance, $schema, $report, $self);
+                            foreach ($matchedProperties as $key => $val) {
+                                $x = count($val);
+                                while ($x--) {
+                                    $val[$x]->validate($instance->getProperty($key), $report, $instance, $schema, $key);
+                                }
+                            }
+                        }
+                    }
+                ),
+                
+                "additionalProperties" => array(
+                    "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
+                        if (is_json_object($instance->getValue())) {
+                            $additionalProperties = $schema->getAttribute("additionalProperties");
+                            $propertySchemas = $schema->getAttribute("properties");
+                            if (!$propertySchemas) {
+                                $propertySchemas = array();
+                            }
+                            $properties = $instance->getProperties();
+                            $matchedProperties = JSV::getMatchedPatternProperties($instance, $schema);
+                            foreach ($properties as $key => $val) {
+                                if ($val && !isset($propertySchemas[$key]) && !isset($matchedProperties[$key])) {
+                                    if ($additionalProperties instanceof JSONSchema) {
+                                        $additionalProperties->validate($val, $report, $instance, $schema, $key);
+                                    } else if ($additionalProperties === false) {
+                                        $report->addError($instance, $schema, "additionalProperties",
+                                                          "Additional properties are not allowed", $additionalProperties);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                ),
+                
+                "items" => array(
+                    "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
+                        if (is_json_array($instance->getValue())) {
+                            $properties = $instance->getProperties();
+                            $items = $schema->getAttribute("items");
+                            $additionalItems = $schema->getAttribute("additionalItems");
+                            
+                            if (is_array($items)) {
+                                for ($x = 0, $xl = count($properties); $x < $xl; ++$x) {
+                                    if (isset($items[$x])) {
+                                        $itemSchema = $items[$x];
+                                    } else {
+                                        $itemSchema = $additionalItems;
+                                    }
+                                    if (is_callabel($itemSchema) && is_object($itemSchema)) {
+                                        $itemSchema->validate($properties[$x], $report, $instance, $schema, $x);
+                                    } else {
+                                        $report->addError($instance, $schema, "additionalItems", "Additional items are not allowed", $itemSchema);
+                                    }
+                                }
+                            } else {
+                                if ($items) {
+                                    $itemSchema = $items;
+                                } else {
+                                    $itemSchema = $additionalItems;
+                                }
+                                for ($x = 0, $xl = $properties->length(); $x < $xl; ++$x) {
+                                    $itemSchema->validate($properties[$x], $report, $instance, $schema, $x);
+                                }
+                            }
+                        }
+                    }
+                ),
+                
+                "additionalItems" => array(
+                    "type" => array(array('$ref' => "#"), "boolean"),
+                    "default" => new \stdClass,
+                    
+                    "parser" => $additionalparser,
+                    
+                    "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
+                        //only validate if the "items" attribute is undefined
+                        if (is_json_array($instance->getValue()) && null === $schema->getProperty("items")) {
+                            $additionalItems = $schema->getAttribute("additionalItems");
+                            $properties = $instance->getProperties();
+                            
+                            if ($additionalItems !== false) {
+                                for ($x = 0, $xl = count($properties); $x < $xl; ++$x) {
+                                    $additionalItems->validate($properties[$x], $report, $instance, $schema, $x);
+                                }
+                            } else if (count($properties)) {
+                                $report->addError($instance, $schema, "additionalItems", "Additional items are not allowed", $additionalItems);
+                            }
+                        }
+                    }
+                ),
+                
+                "optional" => array(
+                    "validationRequired" => false,
+                    "deprecated" => true
+                ),
+                
+                "required" => array(
+                    "type" => "boolean",
+                    "default" => false,
+                    
+                    "parser" => function ($instance, $self) {
+                        return (bool) $instance->getValue();
+                    },
+                    
+                    "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
+                        if (null === $instance->getValue() && $schema->getAttribute("required")) {
+                            $report->addError($instance, $schema, "required", "Property is required", true);
+                        }
+                    }
+                ),
+                
+                "requires" => array(
+                    "deprecated" => true
+                ),
+                
+                "dependencies" => array(
+                    "type" => "object",
+                    "additionalProperties" => array(
+                        "type" => array("string", "array", array('$ref' => "#")),
+                        "items" => array(
+                            "type" => "string"
+                        )
+                    ),
+                    "default" => new \stdClass,
+                    
+                    "parser" => function ($instance, $self, $arg = null) {
+                        function parseProperty(JSONInstance $property) {
+                            if (is_string($property->getValue()) || is_json_array($property->getValue())) {
+                                return $property->getValue();
+                            } else if (is_json_object($property->getValue())) {
+                                return $property->getEnvironment()->createSchema($property, $self->getEnvironment()
+                                                                                 ->findSchema($self->resolveURI("#")));
+                            }
+                        }
+                        
+                        if (is_json_object($instance->getValue())) {
+                            if ($arg) {
+                                return parseProperty($instance->getProperty($arg));
+                            } else {
+                                return array_map($parseProperty, $instance->getProperties());
+                            }
+                        }
+                        //else
+                        return array();
+                    },
+                    
+                    "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
+                        if (is_json_object($instance->getValue())) {
+                            $dependencies = $schema->getAttribute("dependencies");
+                            foreach ($dependencies as $key => $dependency) {
+                                if ($instance->getProperty($key) !== null) {
+                                    if (is_string($dependency)) {
+                                        if ($instance->getProperty($dependency) === null) {
+                                            $report->addError($instance, $schema, "dependencies", 'Property "' . $key .
+                                                              '" requires sibling property "' . $dependency . '"', $dependencies);
+                                        }
+                                    } else if (is_json_array($dependency)) {
+                                        for ($x = 0, $xl = count($dependency); $x < $xl; ++$x) {
+                                            if ($instance->getProperty($dependency[$x]) === null) {
+                                                $report->addError($instance, $schema, "dependencies", 'Property "' .
+                                                                  $key . '" requires sibling property "' . $dependency[$x] . '"', $dependencies);
+                                            }
+                                        }
+                                    } else if ($dependency instanceof JSONSchema) {
+                                        $dependency->validate($instance, $report);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                ),
+                
+                "minimumCanEqual" => array(
+                    "deprecated" => true
+                ),
+                
+                "maximumCanEqual" => array(
+                    "deprecated" => true
+                ),
+                
+                "exclusiveMinimum" => array(
+                    "type" => "boolean",
+                    "default" => false,
+                    
+                    "parser" => function ($instance, $self) {
+                        return (bool) $instance->getValue();
+                    }
+                ),
+                
+                "exclusiveMaximum" => array(
+                    "type" => "boolean",
+                    "default" => false,
+                    
+                    "parser" => function ($instance, $self) {
+                        return (bool) $instance->getValue();
+                    }
+                ),
+                
+                "minimum" => array(
+                    "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
+                        if (is_numeric($instance->getValue())) {
+                            $minimum = $schema->getAttribute("minimum");
+                            $exclusiveMinimum = $schema->getAttribute("exclusiveMinimum");
+                            if (!$exclusiveMinimum) {
+                                $exclusiveMinimum = (!$instance->getEnvironment()->getOption("strict") && !$schema->getAttribute("minimumCanEqual"));
+                            }
+                            if (is_numeric($minimum) && ($instance->getValue() < $minimum ||
+                                                         ($exclusiveMinimum === true && $instance->getValue() === $minimum))) {
+                                $report->addError($instance, $schema, "minimum", "Number is less than the required minimum value", $minimum);
+                            }
+                        }
+                    }
+                ),
+                
+                "maximum" => array(
+                    "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
+                        if (is_numeric($instance->getValue())) {
+                            $maximum = $schema->getAttribute("maximum");
+                            $exclusiveMaximum = $schema->getAttribute("exclusiveMaximum");
+                            if (!$exclusiveMaximum) {
+                                $exclusiveMaximum = (!$instance->getEnvironment()->getOption("strict") && !$schema->getAttribute("maximumCanEqual"));
+                            }
+                            if (is_numeric($maximum) && ($instance->getValue() > $maximum ||
+                                                         ($exclusiveMaximum === true && $instance->getValue() === $maximum))) {
+                                $report->addError($instance, $schema, "maximum", "Number is greater than the required maximum value", $maximum);
+                            }
+                        }
+                    }
+                ),
+                
+                "contentEncoding" => array(
+                    "deprecated" => true
+                ),
+                
+                "divisibleBy" => array(
+                    "exclusiveMinimum" => true
+                ),
+                
+                "disallow" => array(
+                    "items" => array(
+                        "type" => array("string", array('$ref' => "#"))
+                    ),
+                    
+                    "parser" => $disallowparser
+                ),
+                
+                "id" => array(
+                    "type" => "string",
+                    "format" => "uri"
+                ),
+                
+                '$ref' => array(
+                    "type" => "string",
+                    "format" => "uri"
+                ),
+                
+                '$schema' => array(
+                    "type" => "string",
+                    "format" => "uri"
+                )
+            ),
+            
+            "dependencies" => array(
+                "exclusiveMinimum" => "minimum",
+                "exclusiveMaximum" => "maximum"
+            ),
+            
+            "initializer" => function ($instance) {
+                $schemaLink = $instance->getValueOfProperty('$schema');
+                $refLink = $instance->getValueOfProperty('$ref');
+                $idLink = $instance->getValueOfProperty('id');
+                $sch = $instance->getEnvironment()->getSchemas();
+                $opts = $instance->getEnvironment()->getOptions();
+                
+                //if there is a link to a different schema, update instance
+                if ($schemaLink) {
+                    $link = $instance->resolveURI($schemaLink);
+                    if ($link && $instance->getSchema()->getUri() !== $link) {
+                        if ($sch[$link]) {
+                            $instance->setSchema($sch[link]);
+                            $initializer = $instance->getSchema()->getValueOfProperty("initializer");
+                            if (is_callabel($initializer)) {
+                                return $initializer($instance);  //this function will finish initialization
+                            } else {
+                                return $instance;  //no further initialization
+                            }
+                        } else if ($opts["validateReferences"]) {
+                            throw new InitializationException($instance, $instance->getSchema(), '$schema', "Unknown schema reference", $link);
+                        }
+                    }
+                }
+                
+                //if there is a link to the full representation, replace instance
+                if ($refLink) {
+                    $link = $instance->resolveURI($refLink);
+                    if ($link && $instance->getUri() !== $link) {
+                        if ($sch[$link]) {
+                            $instance = $sch[link];
+                            return $instance;  //retrieved schemas are guaranteed to be initialized
+                        } else if ($opts["validateReferences"]) {
+                            throw new InitializationException($instance, $instance->getSchema(), '$ref', "Unknown schema reference", $link);
+                        }
+                    }
+                }
+                
+                //extend schema
+                $extension = $instance->getAttribute("extends");
+                if ($extension instanceof JSONSchema) {
+                    $extended = JSV::inherits($extension, $instance, true);
+                    $instance = $instance->getEnvironment()->createSchema($extended, $instance->getSchema(), $instance->getUri());
+                }
         
-        SCHEMA_02 = ENVIRONMENT.createSchema(SCHEMA_02_JSON, true, "http://json-schema.org/draft-02/schema#");
-        HYPERSCHEMA_02 = ENVIRONMENT.createSchema(JSV.inherits(SCHEMA_02, ENVIRONMENT.createSchema(HYPERSCHEMA_02_JSON, true, "http://json-schema.org/draft-02/hyper-schema#"), true), true, "http://json-schema.org/draft-02/hyper-schema#");
-        
-        ENVIRONMENT.setOption("defaultSchemaURI", "http://json-schema.org/draft-02/hyper-schema#");
-        
-        LINKS_02 = ENVIRONMENT.createSchema(LINKS_02_JSON, HYPERSCHEMA_02, "http://json-schema.org/draft-02/links#");
-        
-        //We need to reinitialize these 3 schemas as they all reference each other
-        SCHEMA_02 = ENVIRONMENT.createSchema(SCHEMA_02.getValue(), HYPERSCHEMA_02, "http://json-schema.org/draft-02/schema#");
-        HYPERSCHEMA_02 = ENVIRONMENT.createSchema(HYPERSCHEMA_02.getValue(), HYPERSCHEMA_02, "http://json-schema.org/draft-02/hyper-schema#");
-        LINKS_02 = ENVIRONMENT.createSchema(LINKS_02.getValue(), HYPERSCHEMA_02, "http://json-schema.org/draft-02/links#");
+                //if instance has a URI link to itself, update it's own URI
+                if ($idLink) {
+                    $link = $instance->resolveURI($idLink);
+                    if (is_string($link)) {
+                        $instance->setUri(JSV::formatURI($link));
+                    }
+                }
+                
+                return $instance;
+            }
+        ));
+    }
+
+    function getHyperSchemaArray()
+    {
+        return JSV::inherits($this->draft2->getHyperSchemaArray(), array(
+            '$schema' => "http://json-schema.org/draft-03/hyper-schema#",
+            "id" => "http://json-schema.org/draft-03/hyper-schema#",
+            
+            "properties" => array(
+                "links" => array(
+                    "selfReferenceVariable" => "@"
+                ),
+                
+                "root" => array(
+                    "deprecated" => true
+                ),
+                
+                "contentEncoding" => array(
+                    "deprecated" => false  //moved from core to hyper
+                ),
+                
+                "alternate" => array(
+                    "deprecated" => true
+                )
+            )
+        ));
+    }
+
+    function getLinksArray()
+    {
+        return JSV::inherits($this->draft2->getLinksArray(), array(
+            '$schema' => "http://json-schema.org/draft-03/hyper-schema#",
+            "id" => "http://json-schema.org/draft-03/links#",
+            
+            "properties" => array(
+                "href" => array(
+                    "required" => true,
+                    "format" => "link-description-object-template"
+                ),
+                
+                "rel" => array(
+                    "required" => true
+                ),
+                
+                "properties" => array(
+                    "deprecated" => true
+                ),
+                
+                "schema" => array('$ref' => "http://json-schema.org/draft-03/hyper-schema#")
+            )
+        ));
     }
 }
