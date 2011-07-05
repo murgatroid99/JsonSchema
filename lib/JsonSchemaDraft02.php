@@ -50,7 +50,6 @@ class JsonSchemaDraft02 extends JsonSchemaDraft01
         $this->LINKS = $this->ENVIRONMENT->createSchema($this->LINKS->getValue(), $this->HYPERSCHEMA, "http://json-schema.org/links#");
 
         JSV::registerEnvironment("json-schema-draft-02", $this->ENVIRONMENT);
-        JSV::registerEnvironment("json-schema-draft-01", JSV::createEnvironment("json-schema-draft-00"));
         
         if (!JSV::getDefaultEnvironmentID() || JSV::getDefaultEnvironmentID() === "json-schema-draft-01") {
             JSV::setDefaultEnvironmentID("json-schema-draft-02");

@@ -42,6 +42,10 @@ namespace JsonSchema;
 include 'uri/Uri.php';
 include 'uri/UriCache.php';
 include 'JsonSchemaDraft01.php';
+include 'JsonSchemaDraft02.php';
+include 'JsonSchemaDraft01For03.php';
+include 'JsonSchemaDraft02For03.php';
+include 'JsonSchemaDraft03.php';
 function is_json_object($i)
 {
     if (is_object($i)) {
@@ -1355,6 +1359,6 @@ class JSV
 		return $matchedProperties;
 	}
 }
-new JsonSchemaDraft01;
-$env = JSV::createEnvironment("json-schema-draft-01");
-echo $env->validate(new \stdClass, array('type' => 'array'))->errors[0];
+new JsonSchemaDraft02;
+$env = JSV::createEnvironment("json-schema-draft-02");
+echo $env->validate(array(1, 1), array('type' => 'array', 'uniqueItems' => true))->errors[0];

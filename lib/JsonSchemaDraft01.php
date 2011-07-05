@@ -1070,7 +1070,8 @@ class JsonSchemaDraft01
                 $newschema[$key] = $value;
                 continue;
             }
-            if ($key == $newkey || $before = 'replace') {
+            $found = true;
+            if ($key == $newkey || $before === 'replace') {
                 $newschema[$key] = $newvalue;
                 continue;
             }
