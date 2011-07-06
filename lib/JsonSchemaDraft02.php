@@ -107,7 +107,7 @@ class JsonSchemaDraft02 extends JsonSchemaDraft01
                             $divisor = $schema->getAttribute("divisibleBy");
                             if ($divisor === 0) {
                                 $report->addError($instance, $schema, "divisibleBy", "Nothing is divisible by 0", $divisor);
-                            } elseif ($divisor !== 1 && ($instance->getValue() < $divisor || (($instance->getValue() / $divisor) % 1) !== 0)) {
+                            } elseif (floor($instance->getValue() / $divisor) != $instance->getValue() / $divisor) {
                                 $report->addError($instance, $schema, "divisibleBy", "Number is not divisible by " . $divisor, $divisor);
                             }
                         }

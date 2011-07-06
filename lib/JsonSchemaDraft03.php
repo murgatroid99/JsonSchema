@@ -52,6 +52,12 @@ class JsonSchemaDraft03 extends JsonSchemaDraft02
         $this->draft1 = new JsonSchemaDraft01For03();
         $this->draft2 = new JsonSchemaDraft02For03();
 
+        return parent::__construct($register);
+    }
+
+    function initializeEnvironment()
+    {
+        $this->ENVIRONMENT = new Environment();
         $this->ENVIRONMENT->setOption("validateReferences", true);
         $this->ENVIRONMENT->setOption("defaultSchemaURI", "http://json-schema.org/draft-03/schema#");  //update later
         
@@ -59,8 +65,6 @@ class JsonSchemaDraft03 extends JsonSchemaDraft02
         $this->ENVIRONMENT->createSchema(array(), true, "http://json-schema.org/draft-03/schema#");
         $this->ENVIRONMENT->createSchema(array(), true, "http://json-schema.org/draft-03/hyper-schema#");
         $this->ENVIRONMENT->createSchema(array(), true, "http://json-schema.org/draft-03/links#");
-
-        return parent::__construct($register);
     }
 
     function initializeSchema($uri = "http://json-schema.org/draft-03/schema#")
@@ -110,12 +114,11 @@ class JsonSchemaDraft03 extends JsonSchemaDraft02
 
     function getSchemaArray()
     {
-        $properties = $this->draft2->SCHEMA->getValueOfProperty("properties");
-        $propertiesparser = $properties["properties"]["parser"];
-        $additionalparser = $properties["additionalProperties"]["parser"];
         $SCHEMA_02_JSON = $this->draft2->getSchemaArray();
         $disallowparser = $SCHEMA_02_JSON["properties"]["type"]["parser"];
-        return JSV::inherits($this->draft2->getSchemaArray(), array(
+        $propertiesparser = $SCHEMA_02_JSON["properties"]["properties"]["parser"];
+        $additionalparser = $SCHEMA_02_JSON["properties"]["additionalProperties"]["parser"];
+        return JSV::inherits($SCHEMA_02_JSON, array(
             '$schema' => "http://json-schema.org/draft-03/schema#",
             "id" => "http://json-schema.org/draft-03/schema#",
             
@@ -123,7 +126,7 @@ class JsonSchemaDraft03 extends JsonSchemaDraft02
                 "patternProperties" => array(
                     "type" => "object",
                     "additionalProperties" => array('$ref' => "#"),
-                    "default" => new \stdClass,
+                    "default" => array(),
                     
                     "parser" => $propertiesparser,
                     
@@ -200,7 +203,7 @@ class JsonSchemaDraft03 extends JsonSchemaDraft02
                 
                 "additionalItems" => array(
                     "type" => array(array('$ref' => "#"), "boolean"),
-                    "default" => new \stdClass,
+                    "default" => array(),
                     
                     "parser" => $additionalparser,
                     
@@ -253,21 +256,21 @@ class JsonSchemaDraft03 extends JsonSchemaDraft02
                             "type" => "string"
                         )
                     ),
-                    "default" => new \stdClass,
+                    "default" => array(),
                     
                     "parser" => function ($instance, $self, $arg = null) {
-                        function parseProperty(JSONInstance $property) {
+                        $parseProperty = function(JSONInstance $property) {
                             if (is_string($property->getValue()) || is_json_array($property->getValue())) {
                                 return $property->getValue();
                             } else if (is_json_object($property->getValue())) {
                                 return $property->getEnvironment()->createSchema($property, $self->getEnvironment()
                                                                                  ->findSchema($self->resolveURI("#")));
                             }
-                        }
+                        };
                         
                         if (is_json_object($instance->getValue())) {
                             if ($arg) {
-                                return parseProperty($instance->getProperty($arg));
+                                return $parseProperty($instance->getProperty($arg));
                             } else {
                                 return array_map($parseProperty, $instance->getProperties());
                             }

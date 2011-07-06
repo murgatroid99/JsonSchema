@@ -85,7 +85,7 @@ class JsonSchemaDraft01
             },
             
             "number" => function ($instance, $report) {
-                return is_int($instance->getValue()) || is_double($instance);
+                return is_numeric($instance->getValue());
             },
             
             "integer" => function ($instance, $report) {
@@ -217,7 +217,7 @@ class JsonSchemaDraft01
                             }
                         }
                         //else
-                        return new stdClass;
+                        return array();
                     },
                     
                     "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {

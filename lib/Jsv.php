@@ -60,7 +60,7 @@ function is_json_object($i)
         }
         return false;
     }
-    return false;
+    return true; // empty array is same as empty object, really
 }
 function is_json_array($i)
 {
@@ -646,7 +646,11 @@ class JSONSchema extends JSONInstance
 class EnvironmentOptions
 {
     public $defaultFragmentDelimiter = '',
-           $defaultSchemaURI = '';
+           $defaultSchemaURI = '',
+           $validateReferences = false,
+           $latestJSONSchemaSchemaURI = '',
+           $latestJSONSchemaHyperSchemaURI = '',
+           $latestJSONSchemaLinksURI = '';
     function __set($var, $value)
     {
         throw new Exception('Unknown option value: ' . $var);
@@ -1361,4 +1365,4 @@ class JSV
 }
 new JsonSchemaDraft03;
 $env = JSV::createEnvironment("json-schema-draft-03");
-echo $env->validate(array(3), array('type' => 'array', 'items' => array('type' => 'number', 'divisibleBy' => 7)))->errors[0];
+echo $env->validate(array(14.0011), array('type' => 'array', 'items' => array('type' => 'number', 'divisibleBy' => 7.0005)))->errors[0];
