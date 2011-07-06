@@ -37,15 +37,7 @@
  * or implied, of Gary Court or the JSON Schema specification.
  */
 
-/*jslint white: true, sub: true, onevar: true, undef: true, eqeqeq: true, newcap: true, immed: true, indent: 4 */
-namespace JsonSchema;
-include 'uri/Uri.php';
-include 'uri/UriCache.php';
-include 'JsonSchemaDraft01.php';
-include 'JsonSchemaDraft02.php';
-include 'JsonSchemaDraft01For03.php';
-include 'JsonSchemaDraft02For03.php';
-include 'JsonSchemaDraft03.php';
+namespace Pyrus\JsonSchema;
 function is_json_object($i)
 {
     if (is_object($i)) {
