@@ -1072,7 +1072,7 @@ class JsonSchemaDraft01
             }
             $found = true;
             if ($key == $newkey || $before === 'replace') {
-                $newschema[$key] = $newvalue;
+                $newschema[$newkey] = $newvalue;
                 continue;
             }
             if ($before) {

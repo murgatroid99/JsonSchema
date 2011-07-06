@@ -66,7 +66,7 @@ class JsonSchemaDraft02 extends JsonSchemaDraft01
     function getSchemaArray()
     {
         $schema = parent::getSchemaArray();
-        $this->insert($schema, 'properties/pattern', 'uniqueItems', array(
+        $schema = $this->insert($schema, 'properties/pattern', 'uniqueItems', array(
 				"type" => "boolean",
 				"optional" => true,
 				"default" => false,
@@ -89,7 +89,7 @@ class JsonSchemaDraft02 extends JsonSchemaDraft01
 					}
 				}
 			));
-        $this->insert($schema, 'properties/maxDecimal', 'divisibleBy', array(
+        $schema = $this->insert($schema, 'properties/maxDecimal', 'divisibleBy', array(
                     "type" => "number", // was integer
                     "minimum" => 0,
 
@@ -107,7 +107,7 @@ class JsonSchemaDraft02 extends JsonSchemaDraft01
                             $divisor = $schema->getAttribute("divisibleBy");
                             if ($divisor === 0) {
                                 $report->addError($instance, $schema, "divisibleBy", "Nothing is divisible by 0", $divisor);
-                            } elseif ($divisor !== 1 && (($instance->getValue() / $divisor) % 1) !== 0) {
+                            } elseif ($divisor !== 1 && ($instance->getValue() < $divisor || (($instance->getValue() / $divisor) % 1) !== 0)) {
                                 $report->addError($instance, $schema, "divisibleBy", "Number is not divisible by " . $divisor, $divisor);
                             }
                         }
@@ -126,7 +126,7 @@ class JsonSchemaDraft02 extends JsonSchemaDraft01
     function getLinksArray()
     {
         $schema = parent::getLinksArray();
-        $this->insert($schema, 'properties/method', 'targetSchema', array(
+        $schema = $this->insert($schema, 'properties/method', 'targetSchema', array(
 				'$ref' => "hyper-schema#",
 				
 				//need this here because parsers are run before links are resolved

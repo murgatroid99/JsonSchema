@@ -492,7 +492,7 @@ class JSONSchema extends JSONInstance
         static $race = 0;
         if ($race) return $this;
         $race = 1; // avoid race condition: endless loop
-        $schema = new self($env, new stdClass, null);
+        $schema = new self($env, array(), null);
         $race = 0;
         $schema->setSchema($schema);
         return $schema;
@@ -501,7 +501,7 @@ class JSONSchema extends JSONInstance
     function setSchema(JSONSchema $schema)
     {
         $this->_schema = $schema;
-        $fr = $this->_schema.getValueOfProperty("fragmentResolution");
+        $fr = $this->_schema->getValueOfProperty("fragmentResolution");
         if ($fr === "dot-delimited") {
             $this->_fd = ".";
         } else if ($fr === "slash-delimited") {
@@ -1359,6 +1359,6 @@ class JSV
 		return $matchedProperties;
 	}
 }
-new JsonSchemaDraft02;
-$env = JSV::createEnvironment("json-schema-draft-02");
-echo $env->validate(array(1, 1), array('type' => 'array', 'uniqueItems' => true))->errors[0];
+new JsonSchemaDraft03;
+$env = JSV::createEnvironment("json-schema-draft-03");
+echo $env->validate(array(3), array('type' => 'array', 'items' => array('type' => 'number', 'divisibleBy' => 7)))->errors[0];
