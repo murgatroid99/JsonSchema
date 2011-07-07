@@ -37,5 +37,5 @@
  * or implied, of Gary Court or the JSON Schema specification.
  */
 
-namespace Pyrus\JsonSchema;
+namespace Pyrus\JsonSchema\JSV;
 class Exception extends \Exception {}

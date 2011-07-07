@@ -37,8 +37,8 @@
  * or implied, of Gary Court or the JSON Schema specification.
  */
 
-namespace Pyrus\JsonSchema;
-use Pyrus\JsonSchema\JSV\Environment, Pyrus\JsonSchema\JSV\Exception, Pyrus\JsonSchema\JSV\ValidationException, Pyrus\JsonSchema\JSV\JSONSchema, Pyrus\JsonSchema\JSV\Report, Pyrus\JsonSchema\JSV\URI, Pyrus\JsonSchema\JSV\EnvironmentOptions;
+namespace Pyrus\JsonSchema\JSV;
+use Pyrus\JsonSchema\URI, Pyrus\JsonSchema\JSV;
 /**
  * A wrapper class for binding an Environment, URI and helper methods to an instance. 
  * This class is most commonly instantiated with {@link Environment#createInstance}.

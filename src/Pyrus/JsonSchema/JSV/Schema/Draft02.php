@@ -41,7 +41,10 @@ namespace Pyrus\JsonSchema\JSV\Schema;
 /*jslint white: true, sub: true, onevar: true, undef: true, eqeqeq: true, newcap: true, immed: true, indent: 4 */
 /*global require */
 
-use JSV, JSV\Environment, JSV\Exception, JSV\ValidationException, JSV\JSONInstance, JSV\JSONSchema, JSV\Report;
+use Pyrus\JsonSchema\JSV\Exception, Pyrus\JsonSchema\JSV\ValidationException, Pyrus\JsonSchema\JSV\JSONInstance, Pyrus\JsonSchema\JSV\JSONSchema,
+    Pyrus\JsonSchema\JSV\Report, Pyrus\JsonSchema\JSV\URI, Pyrus\JsonSchema\JSV\EnvironmentOptions, Pyrus\JsonSchema\JSV\Environment,
+    Pyrus\JsonSchema\JSV, Pyrus\JsonSchema as JS;
+
 
 class Draft02 extends Draft01
 {
@@ -78,7 +81,7 @@ class Draft02 extends Draft01
 				},
 				
 				"validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
-					if (is_json_array($instance->getValue()) && $schema->getAttribute("uniqueItems")) {
+					if (JS\is_json_array($instance->getValue()) && $schema->getAttribute("uniqueItems")) {
 						$value = $instance->getProperties();
 						for ($x = 0, $xl = count($value) - 1; $x < $xl; ++$x) {
 							for ($y = $x + 1, $yl = count($value); $y < $yl; ++$y) {

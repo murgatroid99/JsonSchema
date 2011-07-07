@@ -41,7 +41,9 @@ namespace Pyrus\JsonSchema\JSV\Schema;
 /*jslint white: true, sub: true, onevar: true, undef: true, eqeqeq: true, newcap: true, immed: true, indent: 4 */
 /*global require */
 
-use JSV, JSV\Environment, JSV\Exception, JSV\ValidationException, JSV\JSONInstance, JSV\JSONSchema, JSV\Report;
+use Pyrus\JsonSchema\JSV\Exception, Pyrus\JsonSchema\JSV\ValidationException, Pyrus\JsonSchema\JSV\JSONInstance, Pyrus\JsonSchema\JSV\JSONSchema,
+    Pyrus\JsonSchema\JSV\Report, Pyrus\JsonSchema\JSV\URI, Pyrus\JsonSchema\JSV\EnvironmentOptions, Pyrus\JsonSchema\JSV\Environment,
+    Pyrus\JsonSchema\JSV, Pyrus\JsonSchema as JS;
 
 class Draft01
 {
@@ -99,11 +101,11 @@ class Draft01
             },
             
             "object" => function ($instance, $report) {
-                return is_json_object($instance->getValue());
+                return JS\is_json_object($instance->getValue());
             },
             
             "array" => function ($instance, $report) {
-                return is_json_array($instance->getValue());
+                return JS\is_json_array($instance->getValue());
             },
             
             "null" => function ($instance, $report) {
@@ -143,7 +145,7 @@ class Draft01
                     "parser" => function (JSONInstance $instance, $self) {
                         if (is_string($instance->getValue())) {
                             return $instance->getValue();
-                        } else if (is_json_object($instance->getValue())) {
+                        } else if (JS\is_json_object($instance->getValue())) {
                             return $instance->getEnvironment()->createSchema(
                                 $instance, 
                                 $self->getEnvironment()->findSchema($self->resolveURI("#"))
@@ -208,7 +210,7 @@ class Draft01
                     "parser" => function ($instance, $self, $arg = null) {
                         $env = $instance->getEnvironment();
                         $selfEnv = $self->getEnvironment();
-                        if (is_json_object($instance->getValue())) {
+                        if (JS\is_json_object($instance->getValue())) {
                             if ($arg) {
                                 return $env->createSchema($instance->getProperty($arg), $selfEnv->findSchema($self->resolveURI("#")));
                             } else {
@@ -224,7 +226,7 @@ class Draft01
                     
                     "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
                         //this attribute is for object type instances only
-                        if (is_json_object($instance->getValue())) {
+                        if (JS\is_json_object($instance->getValue())) {
                             //for each property defined in the schema
                             $propertySchemas = $schema->getAttribute("properties");
                             foreach ($propertySchemas as $key => $val) {
@@ -244,7 +246,7 @@ class Draft01
                     "default" => array(),
                     
                     "parser" => function ($instance, $self) {
-                        if (is_json_object($instance->getValue())) {
+                        if (JS\is_json_object($instance->getValue())) {
                             return $instance->getEnvironment()->createSchema($instance, $self->getEnvironment()->findSchema($self->resolveURI("#")));
                         } else if (is_array($instance->getValue())) { // don't need is_json_array here because of previous if
                             $sch = $self->getEnvironment()->findSchema($self->resolveURI("#"));
@@ -258,7 +260,7 @@ class Draft01
                     
                     "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
                         
-                        if (is_json_array($instance->getValue())) {
+                        if (JS\is_json_array($instance->getValue())) {
                             $properties = $instance->getProperties();
                             $items = $schema->getAttribute("items");
                             $additionalProperties = $schema->getAttribute("additionalProperties");
@@ -314,7 +316,7 @@ class Draft01
                     "default" => array(),
                     
                     "parser" => function ($instance, $self) {
-                        if (is_json_object($instance->getValue())) {
+                        if (JS\is_json_object($instance->getValue())) {
                             return $instance->getEnvironment()->createSchema($instance, $self->getEnvironment()->findSchema($self->resolveURI("#")));
                         } else if (is_bool($instance->getValue()) && $instance->getValue() === false) {
                             return false;
@@ -325,7 +327,7 @@ class Draft01
                     
                     "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
                         //we only need to check against object types as arrays do their own checking on this property
-                        if (is_json_object($instance->getValue())) {
+                        if (JS\is_json_object($instance->getValue())) {
                             $additionalProperties = $schema->getAttribute("additionalProperties");
                             $props = $schema->getAttribute("properties");
                             if ($props) {
@@ -355,7 +357,7 @@ class Draft01
                     "parser" => function ($instance, $self) {
                         if (is_string($instance->getValue())) {
                             return $instance->getValue();
-                        } else if (is_json_object($instance->getValue())) {
+                        } else if (JS\is_json_object($instance->getValue())) {
                             return $instance->getEnvironment()->createSchema($instance, $self->getEnvironment()->findSchema($self->resolveURI("#")));
                         }
                     },
@@ -464,7 +466,7 @@ class Draft01
                     },
                     
                     "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
-                        if (is_json_array($instance->getValue())) {
+                        if (JS\is_json_array($instance->getValue())) {
                             $minItems = $schema->getAttribute("minItems");
                             if (is_numeric($minItems) && count($instance->getProperties()) < $minItems) {
                                 $report->addError($instance, $schema, "minItems", "The number of items is less then the required minimum", $minItems);
@@ -485,7 +487,7 @@ class Draft01
                     },
                     
                     "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
-                        if (is_json_array($instance->getValue())) {
+                        if (JS\is_json_array($instance->getValue())) {
                             $maxItems = $schema->getAttribute("maxItems");
                             if (is_numeric($maxItems) && count($instance->getProperties()) > $maxItems) {
                                 $report->addError($instance, $schema, "maxItems", "The number of items is greater then the required maximum", $maxItems);
@@ -569,7 +571,7 @@ class Draft01
                     "uniqueItems" => true,
                     
                     "parser" => function ($instance, $self) {
-                        if (is_json_array($instance->getValue())) {
+                        if (JS\is_json_array($instance->getValue())) {
                             return $instance->getValue();
                         }
                     },
@@ -668,7 +670,7 @@ class Draft01
                     "uniqueItems" => true,
                     
                     "parser" => function ($instance, $self) {
-                        if (is_string($instance->getValue()) || is_json_array($instance->getType())) {
+                        if (is_string($instance->getValue()) || JS\is_json_array($instance->getType())) {
                             return $instance->getValue();
                         }
                     },
@@ -709,7 +711,7 @@ class Draft01
                         return true;
                     },
                     
-                    "typeValidators" => TYPE_VALIDATORS
+                    "typeValidators" => $this->TYPE_VALIDATORS
                 ),
             
                 "extends" => array(
@@ -719,7 +721,7 @@ class Draft01
                     "default" => array(),
                     
                     "parser" => function ($instance, $self) {
-                        if (is_json_object($instance->getValue())) {
+                        if (JS\is_json_object($instance->getValue())) {
                             return $instance->getEnvironment()->createSchema($instance, $self->getEnvironment()->findSchema($self->resolveURI("#")));
                         } else if (is_array($instance->getValue())) { // is_json_array not needed because of previous if
                             $sch = $self->getEnvironment()->findSchema($self->resolveURI("#"));
@@ -734,7 +736,7 @@ class Draft01
                         if ($extensions) {
                             if ($extensions instanceof JSONSchema) {
                                 $extensions->validate($instance, $report, $parent, $parentSchema, $name);
-                            } else if (is_json_array($extensions)) {
+                            } else if (JS\is_json_array($extensions)) {
                                 for ($x = 0, $xl = count($extensions); $x < $xl; ++$x) {
                                     $extensions[$x]->validate($instance, $report, $parent, $parentSchema, $name);
                                 }
@@ -749,7 +751,7 @@ class Draft01
             "fragmentResolution" => "dot-delimited",
             
             "parser" => function ($instance, $self) {
-                if (is_json_object($instance->getValue())) {
+                if (JS\is_json_object($instance->getValue())) {
                     return $instance->getEnvironment()->createSchema($instance, $self);
                 }
             },
@@ -997,7 +999,7 @@ class Draft01
                         $selfEnv = $self->getEnvironment();
                         $additionalPropertiesSchemaURI = $self->getValueOfProperty("additionalProperties");
                         $additionalPropertiesSchemaURI = $additionalPropertiesSchemaURI['$ref'];
-                        if (is_json_object($instance->getValue())) {
+                        if (JS\is_json_object($instance->getValue())) {
                             if ($arg) {
                                 return $env->createSchema($instance->getProperty($arg),
                                                           $selfEnv->findSchema($self->resolveURI($additionalPropertiesSchemaURI)));
@@ -1014,7 +1016,7 @@ class Draft01
             
             "parser" => function ($instance, $self) {
                 $selfProperties = $self->getProperty("properties");
-                if (is_json_object($instance)) {
+                if (JS\is_json_object($instance)) {
                     $props = $instance->getProperties();
                     array_walk($props, function (&$property, $key) use ($selfProperties) {
                         $propertySchema = $selfProperties->getProperty($key);
@@ -1033,7 +1035,7 @@ class Draft01
     }
     function initializeLinks($uri = "http://json-schema.org/links#")
     {
-        $this->LINKS = $this->ENVIRONMENT->createSchema($this->getLinksArray(), HYPERSCHEMA, $uri);
+        $this->LINKS = $this->ENVIRONMENT->createSchema($this->getLinksArray(), $this->HYPERSCHEMA, $uri);
     }
 
     /**

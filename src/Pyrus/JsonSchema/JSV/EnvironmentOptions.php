@@ -37,8 +37,7 @@
  * or implied, of Gary Court or the JSON Schema specification.
  */
 
-namespace Pyrus\JsonSchema;
-use Pyrus\JsonSchema\Exception;
+namespace Pyrus\JsonSchema\JSV;
 class EnvironmentOptions
 {
     public $defaultFragmentDelimiter = '',

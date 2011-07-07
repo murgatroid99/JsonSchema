@@ -38,7 +38,8 @@
  */
 
 namespace Pyrus\JsonSchema\JSV;
-use Pyrus\JsonSchema\JSV\Exception, Pyrus\JsonSchema\JSV\ValidationException, Pyrus\JsonSchema\JSV\JSONInstance, Pyrus\JsonSchema\JSV\JSONSchema, Pyrus\JsonSchema\JSV\Report, Pyrus\JsonSchema\JSV\URI, Pyrus\JsonSchema\JSV\EnvironmentOptions;
+use Pyrus\JsonSchema\JSV, Pyrus\JsonSchema\is_json_object, Pyrus\JS\is_json_array;
+
 class Environment
 {
     protected $_schemas = array();

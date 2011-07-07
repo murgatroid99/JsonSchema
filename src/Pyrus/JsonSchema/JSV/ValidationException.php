@@ -37,7 +37,7 @@
  * or implied, of Gary Court or the JSON Schema specification.
  */
 
-namespace Pyrus\JsonSchema;
+namespace Pyrus\JsonSchema\JSV;
 /**
  * Defines an error, found by a schema, with an instance.
  * This class can only be instantiated by {@link Report#addError}.

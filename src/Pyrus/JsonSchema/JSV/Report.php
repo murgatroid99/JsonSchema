@@ -37,8 +37,7 @@
  * or implied, of Gary Court or the JSON Schema specification.
  */
 
-namespace Pyrus\JsonSchema;
-use Pyrus\JsonSchema\JSV\Environment, Pyrus\JsonSchema\JSV\Exception, Pyrus\JsonSchema\JSV\ValidationException, Pyrus\JsonSchema\JSV\JSONInstance, Pyrus\JsonSchema\JSV\JSONSchema, Pyrus\JsonSchema\JSV\URI, Pyrus\JsonSchema\JSV\EnvironmentOptions;
+namespace Pyrus\JsonSchema\JSV;
 /**
  * Reports are returned from validation methods to describe the result of a validation.
  * @see JSONSchema#validate

@@ -37,8 +37,8 @@
  * or implied, of Gary Court or the JSON Schema specification.
  */
 
-namespace Pyrus\JsonSchema;
-use Pyrus\JsonSchema\JSV\Environment, Pyrus\JsonSchema\JSV\Exception, Pyrus\JsonSchema\JSV\ValidationException, Pyrus\JsonSchema\JSV\JSONInstance, Pyrus\JsonSchema\JSV\Report, Pyrus\JsonSchema\JSV\URI, Pyrus\JsonSchema\JSV\EnvironmentOptions;
+namespace Pyrus\JsonSchema\JSV;
+use Pyrus\JsonSchema as JS, Pyrus\JsonSchema\JSV;
 /**
  * This class binds a {@link JSONInstance} with a {@link JSONSchema} to provided context aware methods. 
  */
@@ -169,7 +169,7 @@ class JSONSchema extends JSONInstance
     
     function getAttributes()
     {
-        if (!count($this->_attributes) && is_json_object($this->_value)) {
+        if (!count($this->_attributes) && JS\is_json_object($this->_value)) {
             $properties = $this->getProperties();
             $schemaProperties = $this->_schema->getProperty("properties");
             $this->_attributes = array();

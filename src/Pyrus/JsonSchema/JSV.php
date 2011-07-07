@@ -38,7 +38,7 @@
  */
 
 namespace Pyrus\JsonSchema;
-use Pyrus\JsonSchema\JSV\Environment, Pyrus\JsonSchema\JSV\Exception, Pyrus\JsonSchema\JSV\ValidationException, Pyrus\JsonSchema\JSV\JSONInstance, Pyrus\JsonSchema\JSV\JSONSchema, Pyrus\JsonSchema\JSV\Report, Pyrus\JsonSchema\JSV\URI;
+use Pyrus\JsonSchema\JSV\Environment, Pyrus\JsonSchema\JSV\Exception, Pyrus\JsonSchema\JSV\ValidationException, Pyrus\JsonSchema\JSV\JSONInstance, Pyrus\JsonSchema\JSV\JSONSchema, Pyrus\JsonSchema\JSV\Report;
 
 function is_json_object($i)
 {
@@ -105,12 +105,13 @@ class JSV
         if (!isset(static::$_environments[$id])) {
             switch ($id) { // lazy load
                 case 'json-schema-draft-03' :
-                case 'json-schema-draft-03' :
-                case 'json-schema-draft-03' :
-                    $class = __NAMESPACE__ . '\JSV\Schema' . ucfirst(str_replace('-', '', $id));
+                case 'json-schema-draft-02' :
+                case 'json-schema-draft-01' :
+                    $class = __NAMESPACE__ . '\JSV\Schema\\' . ucfirst(str_replace(array('json-schema-', '-'), '', $id));
                     new $class;
+                    break;
                 default:
-                    throw new Exception("Unknown Environment ID");
+                    throw new Exception("Unknown Environment ID: $id");
             }
         }
         //else
@@ -129,7 +130,7 @@ class JSV
         if (!$id && $env) {
             $id = $env->_id;
         }
-        if ($id && !static::$_environments[$id] && $env instanceof Environment) {
+        if ($id && !isset(static::$_environments[$id]) && $env instanceof Environment) {
             $env->setId($id);
             static::$_environments[$id] = $env;
         }
@@ -395,13 +396,14 @@ class JSV
             }
             if ($extra instanceof JSONSchema) {
                 $extra = $extra->getAttributes();
-                if ($extra["extends"] && $extension && $extra["extends"] instanceof JSONSchema) {
+                if (isset($extra["extends"]) && $extension && $extra["extends"] instanceof JSONSchema) {
                     $extra["extends"] = array($extra["extends"]);
                 }
             }
             $child = $base;
             foreach ($extra as $x => $unused) {
-                $child[$x] = self::inherits($base[$x], $extra[$x], $extension);
+                $b = isset($base[$x]) ? $base[$x] : null;
+                $child[$x] = self::inherits($b, $extra[$x], $extension);
             }
             return $child;
         } else {

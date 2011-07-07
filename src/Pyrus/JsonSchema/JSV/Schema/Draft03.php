@@ -38,8 +38,10 @@ namespace Pyrus\JsonSchema\JSV\Schema;
  * or implied, of Gary Court or the JSON Schema specification.
  */
 
-use JSV, JSV\Environment, JSV\Exception, JSV\ValidationException, JSV\JSONInstance, JSV\JSONSchema, JSV\Report,
-    JSV\is_json_object, JSV\is_json_array;
+use Pyrus\JsonSchema\JSV\Exception, Pyrus\JsonSchema\JSV\ValidationException, Pyrus\JsonSchema\JSV\JSONInstance, Pyrus\JsonSchema\JSV\JSONSchema,
+    Pyrus\JsonSchema\JSV\Report, Pyrus\JsonSchema\JSV\URI, Pyrus\JsonSchema\JSV\EnvironmentOptions, Pyrus\JsonSchema\JSV\Environment,
+    Pyrus\JsonSchema\JSV, Pyrus\JsonSchema as JS;
+
 
 class Draft03 extends Draft02
 {
@@ -131,7 +133,7 @@ class Draft03 extends Draft02
                     "parser" => $propertiesparser,
                     
                     "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
-                        if (is_json_object($instance->getValue())) {
+                        if (JS\is_json_object($instance->getValue())) {
                             $matchedProperties = JSV::getMatchedPatternProperties($instance, $schema, $report, $self);
                             foreach ($matchedProperties as $key => $val) {
                                 $x = count($val);
@@ -145,7 +147,7 @@ class Draft03 extends Draft02
                 
                 "additionalProperties" => array(
                     "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
-                        if (is_json_object($instance->getValue())) {
+                        if (JS\is_json_object($instance->getValue())) {
                             $additionalProperties = $schema->getAttribute("additionalProperties");
                             $propertySchemas = $schema->getAttribute("properties");
                             if (!$propertySchemas) {
@@ -169,7 +171,7 @@ class Draft03 extends Draft02
                 
                 "items" => array(
                     "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
-                        if (is_json_array($instance->getValue())) {
+                        if (JS\is_json_array($instance->getValue())) {
                             $properties = $instance->getProperties();
                             $items = $schema->getAttribute("items");
                             $additionalItems = $schema->getAttribute("additionalItems");
@@ -209,7 +211,7 @@ class Draft03 extends Draft02
                     
                     "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
                         //only validate if the "items" attribute is undefined
-                        if (is_json_array($instance->getValue()) && null === $schema->getProperty("items")) {
+                        if (JS\is_json_array($instance->getValue()) && null === $schema->getProperty("items")) {
                             $additionalItems = $schema->getAttribute("additionalItems");
                             $properties = $instance->getProperties();
                             
@@ -260,15 +262,15 @@ class Draft03 extends Draft02
                     
                     "parser" => function ($instance, $self, $arg = null) {
                         $parseProperty = function(JSONInstance $property) {
-                            if (is_string($property->getValue()) || is_json_array($property->getValue())) {
+                            if (is_string($property->getValue()) || JS\is_json_array($property->getValue())) {
                                 return $property->getValue();
-                            } else if (is_json_object($property->getValue())) {
+                            } else if (JS\is_json_object($property->getValue())) {
                                 return $property->getEnvironment()->createSchema($property, $self->getEnvironment()
                                                                                  ->findSchema($self->resolveURI("#")));
                             }
                         };
                         
-                        if (is_json_object($instance->getValue())) {
+                        if (JS\is_json_object($instance->getValue())) {
                             if ($arg) {
                                 return $parseProperty($instance->getProperty($arg));
                             } else {
@@ -280,7 +282,7 @@ class Draft03 extends Draft02
                     },
                     
                     "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
-                        if (is_json_object($instance->getValue())) {
+                        if (JS\is_json_object($instance->getValue())) {
                             $dependencies = $schema->getAttribute("dependencies");
                             foreach ($dependencies as $key => $dependency) {
                                 if ($instance->getProperty($key) !== null) {
@@ -289,7 +291,7 @@ class Draft03 extends Draft02
                                             $report->addError($instance, $schema, "dependencies", 'Property "' . $key .
                                                               '" requires sibling property "' . $dependency . '"', $dependencies);
                                         }
-                                    } else if (is_json_array($dependency)) {
+                                    } else if (JS\is_json_array($dependency)) {
                                         for ($x = 0, $xl = count($dependency); $x < $xl; ++$x) {
                                             if ($instance->getProperty($dependency[$x]) === null) {
                                                 $report->addError($instance, $schema, "dependencies", 'Property "' .

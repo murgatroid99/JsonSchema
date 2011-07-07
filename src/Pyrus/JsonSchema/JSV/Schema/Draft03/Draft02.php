@@ -38,7 +38,9 @@ namespace Pyrus\JsonSchema\JSV\Schema\Draft03;
  * or implied, of Gary Court or the JSON Schema specification.
  */
 
-use JSV, JSV\Environment, JSV\Exception, JSV\ValidationException, JSV\JSONInstance, JSV\JSONSchema, JSV\Report, JSV\Schema;
+use Pyrus\JsonSchema\JSV\Exception, Pyrus\JsonSchema\JSV\ValidationException, Pyrus\JsonSchema\JSV\JSONInstance, Pyrus\JsonSchema\JSV\JSONSchema,
+    Pyrus\JsonSchema\JSV\Report, Pyrus\JsonSchema\JSV\URI, Pyrus\JsonSchema\JSV\EnvironmentOptions, Pyrus\JsonSchema\JSV\Environment,
+    Pyrus\JsonSchema\JSV, Pyrus\JsonSchema as JS;
 
 class Draft02 extends Schema\Draft02
 {
