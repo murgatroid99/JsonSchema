@@ -212,10 +212,13 @@ class PEAR2_PHPT
     function assertSchemaValidateFail($expected, $report, $message)
     {
         settype($expected, 'array');
-        if (!$this->assertEquals(count($expected), count($report->errors), "Error count did not match for " . $message)) return false;
+        if (!$this->assertEquals(count($expected), count($report->errors), "Error count did not match for " . $message)) {
+            if (!count($report->errors)) return false;
+        }
         $trace = debug_backtrace();
         $result = true;
         foreach ($report->errors as $i => $error) {
+            if (!isset($expected[$i])) $expected[$i] = '';
             if ($expected[$i] != $error->getMessage()) {
                 $this->_failTest($trace, 'Expected message "' . $expected[$i] . '" but got "' . $error->getMessage() . '"');
                 $result = false;
