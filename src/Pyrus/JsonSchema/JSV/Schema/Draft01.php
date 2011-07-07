@@ -274,7 +274,7 @@ class Draft01
                             
                             if (is_array($items)) { // no need for is_json_array here, items is either 1 thing or an array of things
                                 for ($x = 0, $xl = count($properties); $x < $xl; ++$x) {
-                                    if ($items[$x]) {
+                                    if (isset($items[$x])) {
                                         $itemSchema = $items[$x];
                                     } else {
                                         $itemSchema = $additionalProperties;
