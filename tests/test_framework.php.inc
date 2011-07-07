@@ -138,13 +138,19 @@ class PEAR2_PHPT
         return true;
     }
 
-    function assertException($exception, $class, $emessage, $message)
+    function assertException($exception, $class, $emessage, $message, $trace = null)
     {
-        if (!($exception instanceof $class)) {
-            $this->_failTest(debug_backtrace(), $message);
-            echo "Expecting class $class, got ", get_class($exception);
+        if (!$trace) {
+            $trace = debug_backtrace();
         }
-        $this->assertEquals($emessage, $exception->getMessage(), $message, debug_backtrace());
+        $success = true;
+        if (!($exception instanceof $class)) {
+            $this->_failTest($trace, $message);
+            echo "Expecting class $class, got ", get_class($exception);
+            $success = false;
+        }
+        $success = $success && $this->assertEquals($emessage, $exception->getMessage(), $message, $trace);
+        return $success;
     }
 
     function assertEquals($control, $test, $message, $trace = null)
@@ -216,6 +222,33 @@ class PEAR2_PHPT
             if (!count($report->errors)) return false;
         }
         $trace = debug_backtrace();
+        $result = true;
+        foreach ($report->errors as $i => $error) {
+            if (!isset($expected[$i])) $expected[$i] = '';
+            if ($expected[$i] != $error->getMessage()) {
+                $this->_failTest($trace, 'Expected message "' . $expected[$i] . '" but got "' . $error->getMessage() . '"');
+                $result = false;
+            }
+        }
+        return $result;
+    }
+
+    function assertSchemaException($expected, Closure $func, $message)
+    {
+        $trace = debug_backtrace();
+        try {
+            $func();
+            throw new Exception('$$$');
+        } catch (Exception $e) {
+            if ($e->getMessage() == '$$$') {
+                $this->_failTest($trace, 'no exception thrown: ' . $message);
+                return false;
+            }
+            if (!$this->assertException($e, 'Pyrus\JsonSchema\JSV\Environment\Exception', 'Schema validation failed', $message, $trace)) {
+                return false;
+            }
+        }
+        $report = $e->report;
         $result = true;
         foreach ($report->errors as $i => $error) {
             if (!isset($expected[$i])) $expected[$i] = '';
