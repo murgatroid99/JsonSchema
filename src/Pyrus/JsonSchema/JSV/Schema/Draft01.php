@@ -519,8 +519,8 @@ class Draft01
                     
                     "parser" => function ($instance, $self) {
                         if (is_string($instance->getValue())) {
-                            if (false === @preg_match($instance->getValue(), '')) {
-                                return new Exception('Bad regex ' . $instance->getValue());
+                            if (false === @preg_match('/' . str_replace('/', '\\/', $instance->getValue()) . '/', '')) {
+                                return new Exception($instance->getValue());
                             }
                             return $instance->getValue();
                         }
@@ -529,8 +529,10 @@ class Draft01
                     "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
                         $pattern = $schema->getAttribute("pattern");
                         if ($pattern instanceof Exception) {
-                            $report->addError($instance, $schema, "pattern", "Invalid pattern [schema path: " . $instance->getPath() . "]", $pattern);
-                        } elseif (is_string($instance->getValue()) && $pattern && !preg_match('/' . $pattern . '/', $instance->getValue())) {
+                            $report->addError($instance, $schema, "pattern", "Schema has invalid pattern \"" .
+                                              $pattern->getMessage() . "\" [schema path: " . $instance->getPath() . "]", $pattern);
+                        } elseif (is_string($instance->getValue()) && $pattern &&
+                                  !preg_match('/' . str_replace('/', '\\/', $pattern) . '/', $instance->getValue())) {
                             $report->addError($instance, $schema, "pattern", "String does not match pattern [schema path: " .
                                               $instance->getPath() . "]", $pattern);
                         }
@@ -635,7 +637,7 @@ class Draft01
                         if (is_string($instance->getValue())) {
                             $format = $schema->getAttribute("format");
                             $formatValidators = $self->getValueOfProperty("formatValidators");
-                            if (is_string($format) &&
+                            if (is_string($format) && isset($formatValidators[$format]) &&
                                 is_callable($formatValidators[$format]) && !$formatValidators[$format]($instance, $report)) {
                                 $report->addError($instance, $schema, "format", "String is not in the required format [schema path: " .
                                                   $instance->getPath() . "]", $format);
