@@ -569,7 +569,7 @@ class Draft01
                     "optional" => true,
                     
                     "parser" => function ($instance, $self) {
-                        if (is_numeric($instance->getType())) {
+                        if (is_numeric($instance->getValue())) {
                             return $instance->getValue();
                         }
                     },
