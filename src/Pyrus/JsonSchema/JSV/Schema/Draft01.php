@@ -405,7 +405,7 @@ class Draft01
                             $minimumCanEqual = $schema->getAttribute("minimumCanEqual");
                             if (is_numeric($minimum) && ($instance->getValue() < $minimum ||
                                                          ($minimumCanEqual === false && $instance->getValue() === $minimum))) {
-                                $report->addError($instance, $schema, "minimum", "Number is less then the required minimum value [schema path: " .
+                                $report->addError($instance, $schema, "minimum", "Number is less than the required minimum value [schema path: " .
                                                   $instance->getPath() . "]", $minimum);
                             }
                         }
@@ -428,7 +428,7 @@ class Draft01
                             $maximumCanEqual = $schema->getAttribute("maximumCanEqual");
                             if (is_numeric($maximum) && ($instance->getValue() > $maximum ||
                                                          ($maximumCanEqual === false && $instance->getValue() === $maximum))) {
-                                $report->addError($instance, $schema, "maximum", "Number is greater then the required maximum value [schema path: " .
+                                $report->addError($instance, $schema, "maximum", "Number is greater than the required maximum value [schema path: " .
                                                   $instance->getPath() . "]", $maximum);
                             }
                         }
