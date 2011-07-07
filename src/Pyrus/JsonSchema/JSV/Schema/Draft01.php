@@ -483,7 +483,7 @@ class Draft01
                         if (JS\is_json_array($instance->getValue())) {
                             $minItems = $schema->getAttribute("minItems");
                             if (is_numeric($minItems) && count($instance->getProperties()) < $minItems) {
-                                $report->addError($instance, $schema, "minItems", "The number of items is less then the required minimum [schema path: " .
+                                $report->addError($instance, $schema, "minItems", "The number of items is less than the required minimum [schema path: " .
                                                   $instance->getPath() . "]", $minItems);
                             }
                         }
@@ -505,7 +505,7 @@ class Draft01
                         if (JS\is_json_array($instance->getValue())) {
                             $maxItems = $schema->getAttribute("maxItems");
                             if (is_numeric($maxItems) && count($instance->getProperties()) > $maxItems) {
-                                $report->addError($instance, $schema, "maxItems", "The number of items is greater then the required maximum [schema path: " .
+                                $report->addError($instance, $schema, "maxItems", "The number of items is greater than the required maximum [schema path: " .
                                                   $instance->getPath() . "]", $maxItems);
                             }
                         }
@@ -555,7 +555,7 @@ class Draft01
                         if (is_string($instance->getValue())) {
                             $minLength = $schema->getAttribute("minLength");
                             if (is_numeric($minLength) && strlen($instance->getValue()) < $minLength) {
-                                $report->addError($instance, $schema, "minLength", "String is less then the required minimum length [schema path: " .
+                                $report->addError($instance, $schema, "minLength", "String is less than the required minimum length [schema path: " .
                                                   $instance->getPath() . "]", $minLength);
                             }
                         }
@@ -576,7 +576,7 @@ class Draft01
                         if (is_string($instance->getValue())) {
                             $maxLength = $schema->getAttribute("maxLength");
                             if (is_numeric($maxLength) && strlen($instance->getValue()) > $maxLength) {
-                                $report->addError($instance, $schema, "maxLength", "String is greater then the required maximum length [schema path: " .
+                                $report->addError($instance, $schema, "maxLength", "String is greater than the required maximum length [schema path: " .
                                                   $instance->getPath() . "]", $maxLength);
                             }
                         }
@@ -676,7 +676,7 @@ class Draft01
                                     $decimals = strlen($decimals[1]);
                                     if ($decimals > $maxDecimal) {
                                         $report->addError($instance, $schema, "maxDecimal",
-                                                          "The number of decimal places is greater then the allowed maximum [schema path: " .
+                                                          "The number of decimal places is greater than the allowed maximum [schema path: " .
                                                           $instance->getPath() . "]", $maxDecimal);
                                     }
                                 }

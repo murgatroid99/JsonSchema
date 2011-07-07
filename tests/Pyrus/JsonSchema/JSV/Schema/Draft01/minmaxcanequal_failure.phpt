@@ -1,5 +1,5 @@
 --TEST--
-JsonSchema: requires, schema validation, failure test
+JsonSchema: minimumCanEqual/maximumCanEqual, schema validation, failure test
 --FILE--
 <?php
 require dirname(__FILE__) . '/setup.php.inc';
