@@ -89,7 +89,7 @@ class Draft01
             },
             
             "number" => function ($instance, $report) {
-                return is_numeric($instance->getValue());
+                return !is_string($instance->getValue()) && is_numeric($instance->getValue());
             },
             
             "integer" => function ($instance, $report) {
@@ -191,7 +191,14 @@ class Draft01
                             }
                             
                             //if we get to this point, type is invalid
-                            $report->addError($instance, $schema, "type", "Instance is not a required type", $requiredTypes);
+                            $msgs = array_map(function($val) {
+                                if (is_string($val)) {
+                                    return $val;
+                                }
+                                return '[schema: ' . json_encode($val->getValue()) . ']';
+                            }, $requiredTypes);
+                            $report->addError($instance, $schema, "type", "Instance is not a required type: " .
+                                              implode(', ', $msgs), $requiredTypes);
                             return false;
                         }
                         //else, anything is allowed if no type is specified

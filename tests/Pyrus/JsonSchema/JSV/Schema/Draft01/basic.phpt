@@ -1,5 +1,5 @@
 --TEST--
-PEAR2_Pyrus_Channel::__construct() basic test
+JsonSchema: basic types, no schema validation
 --FILE--
 <?php
 require dirname(__FILE__) . '/setup.php.inc';

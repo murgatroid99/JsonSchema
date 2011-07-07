@@ -209,6 +209,21 @@ class PEAR2_PHPT
         return false;
     }
 
+    function assertSchemaValidateFail($expected, $report, $message)
+    {
+        settype($expected, 'array');
+        if (!$this->assertEquals(count($expected), count($report->errors), "Error count did not match for " . $message)) return false;
+        $trace = debug_backtrace();
+        $result = true;
+        foreach ($report->errors as $i => $error) {
+            if ($expected[$i] != $error->getMessage()) {
+                $this->_failTest($trace, 'Expected message "' . $expected[$i] . '" but got "' . $error->getMessage() . '"');
+                $result = false;
+            }
+        }
+        return $result;
+    }
+
     function _failTest($trace, $message)
     {
         echo 'Test Failure: "' . $message  . "\"\n in " . $trace[0]['file'] . ' line ' .
