@@ -161,7 +161,7 @@ class Draft03 extends Draft02
                                         $additionalProperties->validate($val, $report, $instance, $schema, $key);
                                     } else if ($additionalProperties === false) {
                                         $report->addError($instance, $schema, "additionalProperties",
-                                                          "Additional properties are not allowed", $additionalProperties);
+                                                          "Additional properties are not allowed [schema path: " . $instance->getPath() . "]", $additionalProperties);
                                     }
                                 }
                             }
@@ -186,7 +186,8 @@ class Draft03 extends Draft02
                                     if (is_callabel($itemSchema) && is_object($itemSchema)) {
                                         $itemSchema->validate($properties[$x], $report, $instance, $schema, $x);
                                     } else {
-                                        $report->addError($instance, $schema, "additionalItems", "Additional items are not allowed", $itemSchema);
+                                        $report->addError($instance, $schema, "additionalItems", "Additional items are not allowed [schema path: " .
+                                                          $instance->getPath() . "]", $itemSchema);
                                     }
                                 }
                             } else {
@@ -220,7 +221,8 @@ class Draft03 extends Draft02
                                     $additionalItems->validate($properties[$x], $report, $instance, $schema, $x);
                                 }
                             } else if (count($properties)) {
-                                $report->addError($instance, $schema, "additionalItems", "Additional items are not allowed", $additionalItems);
+                                $report->addError($instance, $schema, "additionalItems", "Additional items are not allowed [schema path: " .
+                                                  $instance->getPath() . "]", $additionalItems);
                             }
                         }
                     }
@@ -241,7 +243,8 @@ class Draft03 extends Draft02
                     
                     "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
                         if (null === $instance->getValue() && $schema->getAttribute("required")) {
-                            $report->addError($instance, $schema, "required", "Property is required", true);
+                            $report->addError($instance, $schema, "required", "Property is required [schema path: " .
+                                              $instance->getPath() . "]", true);
                         }
                     }
                 ),
@@ -289,13 +292,15 @@ class Draft03 extends Draft02
                                     if (is_string($dependency)) {
                                         if ($instance->getProperty($dependency) === null) {
                                             $report->addError($instance, $schema, "dependencies", 'Property "' . $key .
-                                                              '" requires sibling property "' . $dependency . '"', $dependencies);
+                                                              '" requires sibling property "' . $dependency . '"' .
+                                                              " [schema path: " . $instance->getPath() . "]", $dependencies);
                                         }
                                     } else if (JS\is_json_array($dependency)) {
                                         for ($x = 0, $xl = count($dependency); $x < $xl; ++$x) {
                                             if ($instance->getProperty($dependency[$x]) === null) {
                                                 $report->addError($instance, $schema, "dependencies", 'Property "' .
-                                                                  $key . '" requires sibling property "' . $dependency[$x] . '"', $dependencies);
+                                                                  $key . '" requires sibling property "' . $dependency[$x] . '"' .
+                                                                  " [schema path: " . $instance->getPath() . "]", $dependencies);
                                             }
                                         }
                                     } else if ($dependency instanceof JSONSchema) {
@@ -343,7 +348,8 @@ class Draft03 extends Draft02
                             }
                             if (is_numeric($minimum) && ($instance->getValue() < $minimum ||
                                                          ($exclusiveMinimum === true && $instance->getValue() === $minimum))) {
-                                $report->addError($instance, $schema, "minimum", "Number is less than the required minimum value", $minimum);
+                                $report->addError($instance, $schema, "minimum", "Number is less than the required minimum value" .
+                                                  " [schema path: " . $instance->getPath() . "]", $minimum);
                             }
                         }
                     }
@@ -359,7 +365,8 @@ class Draft03 extends Draft02
                             }
                             if (is_numeric($maximum) && ($instance->getValue() > $maximum ||
                                                          ($exclusiveMaximum === true && $instance->getValue() === $maximum))) {
-                                $report->addError($instance, $schema, "maximum", "Number is greater than the required maximum value", $maximum);
+                                $report->addError($instance, $schema, "maximum", "Number is greater than the required maximum value" .
+                                                  " [schema path: " . $instance->getPath() . "]", $maximum);
                             }
                         }
                     }

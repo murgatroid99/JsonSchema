@@ -198,7 +198,7 @@ class Draft01
                                 return '[schema: ' . json_encode($val->getValue()) . ']';
                             }, $requiredTypes);
                             $report->addError($instance, $schema, "type", "Instance is not a required type: " .
-                                              implode(', ', $msgs), $requiredTypes);
+                                              implode(', ', $msgs) . " [schema path: " . $instance->getPath() . "]", $requiredTypes);
                             return false;
                         }
                         //else, anything is allowed if no type is specified
@@ -282,7 +282,8 @@ class Draft01
                                     if ($itemSchema !== false) {
                                         $itemSchema->validate($properties[$x], $report, $instance, $schema, $x);
                                     } else {
-                                        $report->addError($instance, $schema, "additionalProperties", "Additional items are not allowed", $itemSchema);
+                                        $report->addError($instance, $schema, "additionalProperties", "Additional items are not allowed [schema path: " .
+                                                          $instance->getPath() . "]", $itemSchema);
                                     }
                                 }
                             } else {
@@ -310,7 +311,8 @@ class Draft01
                     
                     "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
                         if ($instance->getValue() === null && !$schema->getAttribute("optional")) {
-                            $report->addError($instance, $schema, "optional", "Property is required", false);
+                            $report->addError($instance, $schema, "optional", "Property \"$name\" is required [schema path: " .
+                                              $instance->getPath() . "]", false);
                         }
                     },
                     
@@ -349,7 +351,8 @@ class Draft01
                                         $additionalProperties->validate($val, $report, $instance, $schema, $key);
                                     } else if ($additionalProperties === false) {
                                         $report->addError($instance, $schema, "additionalProperties",
-                                                          "Additional properties are not allowed", $additionalProperties);
+                                                          "Additional properties are not allowed [schema path: " .
+                                                          $instance->getPath() . "]", $additionalProperties);
                                     }
                                 }
                             }
@@ -374,7 +377,9 @@ class Draft01
                             $requires = $schema->getAttribute("requires");
                             if (is_string($requires)) {
                                 if ($parent->getProperty($requires)->getValue() === null) {
-                                    $report->addError($instance, $schema, "requires", 'Property requires sibling property "' . $requires . '"',
+                                    $report->addError($instance, $schema, "requires", 'Property requires sibling property "' . $requires .
+                                                      '" [schema path: ' .
+                                                      $instance->getPath() . ']',
                                                       $requires);
                                 }
                             } else if ($requires instanceof JSONSchema) {
@@ -400,7 +405,8 @@ class Draft01
                             $minimumCanEqual = $schema->getAttribute("minimumCanEqual");
                             if (is_numeric($minimum) && ($instance->getValue() < $minimum ||
                                                          ($minimumCanEqual === false && $instance->getValue() === $minimum))) {
-                                $report->addError($instance, $schema, "minimum", "Number is less then the required minimum value", $minimum);
+                                $report->addError($instance, $schema, "minimum", "Number is less then the required minimum value [schema path: " .
+                                                  $instance->getPath() . "]", $minimum);
                             }
                         }
                     }
@@ -422,7 +428,8 @@ class Draft01
                             $maximumCanEqual = $schema->getAttribute("maximumCanEqual");
                             if (is_numeric($maximum) && ($instance->getValue() > $maximum ||
                                                          ($maximumCanEqual === false && $instance->getValue() === $maximum))) {
-                                $report->addError($instance, $schema, "maximum", "Number is greater then the required maximum value", $maximum);
+                                $report->addError($instance, $schema, "maximum", "Number is greater then the required maximum value [schema path: " .
+                                                  $instance->getPath() . "]", $maximum);
                             }
                         }
                     }
@@ -476,7 +483,8 @@ class Draft01
                         if (JS\is_json_array($instance->getValue())) {
                             $minItems = $schema->getAttribute("minItems");
                             if (is_numeric($minItems) && count($instance->getProperties()) < $minItems) {
-                                $report->addError($instance, $schema, "minItems", "The number of items is less then the required minimum", $minItems);
+                                $report->addError($instance, $schema, "minItems", "The number of items is less then the required minimum [schema path: " .
+                                                  $instance->getPath() . "]", $minItems);
                             }
                         }
                     }
@@ -497,7 +505,8 @@ class Draft01
                         if (JS\is_json_array($instance->getValue())) {
                             $maxItems = $schema->getAttribute("maxItems");
                             if (is_numeric($maxItems) && count($instance->getProperties()) > $maxItems) {
-                                $report->addError($instance, $schema, "maxItems", "The number of items is greater then the required maximum", $maxItems);
+                                $report->addError($instance, $schema, "maxItems", "The number of items is greater then the required maximum [schema path: " .
+                                                  $instance->getPath() . "]", $maxItems);
                             }
                         }
                     }
@@ -520,9 +529,10 @@ class Draft01
                     "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
                         $pattern = $schema->getAttribute("pattern");
                         if ($pattern instanceof Exception) {
-                            $report->addError($instance, $schema, "pattern", "Invalid pattern", $pattern);
+                            $report->addError($instance, $schema, "pattern", "Invalid pattern [schema path: " . $instance->getPath() . "]", $pattern);
                         } elseif (is_string($instance->getValue()) && $pattern && !preg_match('/' . $pattern . '/', $instance->getValue())) {
-                            $report->addError($instance, $schema, "pattern", "String does not match pattern", $pattern);
+                            $report->addError($instance, $schema, "pattern", "String does not match pattern [schema path: " .
+                                              $instance->getPath() . "]", $pattern);
                         }
                     }
                 ),
@@ -545,7 +555,8 @@ class Draft01
                         if (is_string($instance->getValue())) {
                             $minLength = $schema->getAttribute("minLength");
                             if (is_numeric($minLength) && strlen($instance->getValue()) < $minLength) {
-                                $report->addError($instance, $schema, "minLength", "String is less then the required minimum length", $minLength);
+                                $report->addError($instance, $schema, "minLength", "String is less then the required minimum length [schema path: " .
+                                                  $instance->getPath() . "]", $minLength);
                             }
                         }
                     }
@@ -565,7 +576,8 @@ class Draft01
                         if (is_string($instance->getValue())) {
                             $maxLength = $schema->getAttribute("maxLength");
                             if (is_numeric($maxLength) && strlen($instance->getValue()) > $maxLength) {
-                                $report->addError($instance, $schema, "maxLength", "String is greater then the required maximum length", $maxLength);
+                                $report->addError($instance, $schema, "maxLength", "String is greater then the required maximum length [schema path: " .
+                                                  $instance->getPath() . "]", $maxLength);
                             }
                         }
                     }
@@ -592,7 +604,8 @@ class Draft01
                                         return true;
                                     }
                                 }
-                                $report->addError($instance, $schema, "enum", "Instance is not one of the possible values", $enums);
+                                $report->addError($instance, $schema, "enum", "Instance is not one of the possible values [schema path: " .
+                                                  $instance->getPath() . "]", $enums);
                             }
                         }
                     }
@@ -624,7 +637,8 @@ class Draft01
                             $formatValidators = $self->getValueOfProperty("formatValidators");
                             if (is_string($format) &&
                                 is_callable($formatValidators[$format]) && !$formatValidators[$format]($instance, $report)) {
-                                $report->addError($instance, $schema, "format", "String is not in the required format", $format);
+                                $report->addError($instance, $schema, "format", "String is not in the required format [schema path: " .
+                                                  $instance->getPath() . "]", $format);
                             }
                         }
                     },
@@ -662,7 +676,8 @@ class Draft01
                                     $decimals = strlen($decimals[1]);
                                     if ($decimals > $maxDecimal) {
                                         $report->addError($instance, $schema, "maxDecimal",
-                                                          "The number of decimal places is greater then the allowed maximum", $maxDecimal);
+                                                          "The number of decimal places is greater then the allowed maximum [schema path: " .
+                                                          $instance->getPath() . "]", $maxDecimal);
                                     }
                                 }
                             }
@@ -699,13 +714,15 @@ class Draft01
                                 $key = $disallowedTypes[$x];
                                 if (is_callable($typeValidators[$key])) {
                                     if ($typeValidators[$key]($instance, $report)) {
-                                        $report->addError($instance, $schema, "disallow", "Instance is a disallowed type", $disallowedTypes);
+                                        $report->addError($instance, $schema, "disallow", "Instance is a disallowed type [schema path: " .
+                                                          $instance->getPath() . "]", $disallowedTypes);
                                         return false;
                                     }
                                 } 
                                 /*
                                 else {
-                                    $report->addError($instance, $schema, "disallow", "Instance may be a disallowed type", $disallowedTypes);
+                                    $report->addError($instance, $schema, "disallow", "Instance may be a disallowed type [schema path: " .
+                                    $instance->getPath() . "]", $disallowedTypes);
                                     return false;
                                 }
                                 */
@@ -916,7 +933,8 @@ class Draft01
                             if (is_string($pathStart)) {
                                 //TODO: Find out what pathStart is relative to
                                 if ($instance->getURI()->indexOf($pathStart) !== 0) {
-                                    $report->addError($instance, $schema, "pathStart", "Instance's URI does not start with " . $pathStart, $pathStart);
+                                    $report->addError($instance, $schema, "pathStart", "Instance's URI does not start with " . $pathStart .
+                                                      " [schema path: " . $instance->getPath() . "]", $pathStart);
                                 }
                             }
                         }

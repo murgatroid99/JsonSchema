@@ -11,7 +11,7 @@ $test->assertSchemaValidate($env->validate(false, array('type' => 'boolean')), "
 $test->assertSchemaValidate($env->validate(null, array('type' => 'null', 'optional' => true)), "Null");
 $test->assertSchemaValidate($env->validate(true, array('type' => 'any')), "Any");
 
-$test->assertSchemaValidate($env->validate(new \stdClass, array('null', 'boolean', 'number', 'integer', 'string', 'array', 'object')), "Union");
+$test->assertSchemaValidate($env->validate(new \stdClass, array('type' => array('null', 'boolean', 'number', 'integer', 'string', 'array', 'object'))), "Union");
 $test->assertSchemaValidate($env->validate(new \stdClass, array('type' => array(array('type' => 'string'), array('type' => 'object' )))), "Schema Union");
 ?>
 ===DONE===

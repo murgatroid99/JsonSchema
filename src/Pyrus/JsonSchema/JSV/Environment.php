@@ -269,7 +269,7 @@ class Environment
         }
             
         if (count($report->errors)) {
-            return $report;
+            throw new Environment\Exception('Schema validation failed', $report);
         }
         
         return $schema->validate($instance, $report);

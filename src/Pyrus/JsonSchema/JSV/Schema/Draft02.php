@@ -86,7 +86,8 @@ class Draft02 extends Draft01
 						for ($x = 0, $xl = count($value) - 1; $x < $xl; ++$x) {
 							for ($y = $x + 1, $yl = count($value); $y < $yl; ++$y) {
 								if ($value[$x]->equals($value[$y])) {
-									$report->addError($instance, $schema, "uniqueItems", "Array can only contain unique items",
+									$report->addError($instance, $schema, "uniqueItems", "Array can only contain unique items [schema path: " .
+                                                      $instance->getPath() . "]",
                                                       array('x' => $x, 'y' => $y));
 								}
 							}
@@ -111,9 +112,11 @@ class Draft02 extends Draft01
                         if (is_numeric($instance->getValue())) {
                             $divisor = $schema->getAttribute("divisibleBy");
                             if ($divisor === 0) {
-                                $report->addError($instance, $schema, "divisibleBy", "Nothing is divisible by 0", $divisor);
+                                $report->addError($instance, $schema, "divisibleBy", "Nothing is divisible by 0 [schema path: " .
+                                                  $instance->getPath() . "]", $divisor);
                             } elseif (floor($instance->getValue() / $divisor) != $instance->getValue() / $divisor) {
-                                $report->addError($instance, $schema, "divisibleBy", "Number is not divisible by " . $divisor, $divisor);
+                                $report->addError($instance, $schema, "divisibleBy", "Number is not divisible by " . $divisor .
+                                                  " [schema path: " . $instance->getPath() . "]", $divisor);
                             }
                         }
                     }

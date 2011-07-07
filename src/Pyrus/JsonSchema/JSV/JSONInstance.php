@@ -57,6 +57,11 @@ class JSONInstance
         return $this->_fd;
     }
 
+    function getPath()
+    {
+        return substr($this->_uri, strpos($this->_uri, '#'));
+    }
+
     function getUri()
     {
         return $this->_uri;
