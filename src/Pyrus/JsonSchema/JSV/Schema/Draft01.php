@@ -726,15 +726,59 @@ class Draft01
                                 }
                             }
                             $report->addError($instance, $schema, "date-time", "Date-time \"" .
-                                              $instance->getValue() . "\"is not valid [schema path: " .
+                                              $instance->getValue() . "\" is not valid [schema path: " .
+                                              $instance->getPath() . "]", $instance->getValue());
+                            date_default_timezone_set($zone);
+                            return false;
+                        },
+                        "date" => function($instance, $report, $schema) {
+                            $zone = @date_default_timezone_get();
+                            date_default_timezone_set('UTC');
+                            if (preg_match('/^([0-9]{4})\-(0[1-9]|1[0-2])\-(0[1-9]|[1-2][0-9]|30|31)$/', $instance->getValue(), $matches)) {
+                                try {
+                                    $a = new \DateTime($instance->getValue());
+                                    if ($a->format('Y') == $matches[1] &&
+                                        $a->format('m') == $matches[2] &&
+                                        $a->format('d') == $matches[3]) {
+                                        return true;
+                                    }
+                                } catch (Exception $e) {
+                                }
+                            }
+                            $report->addError($instance, $schema, "date", "Date \"" .
+                                              $instance->getValue() . "\" is not valid [schema path: " .
+                                              $instance->getPath() . "]", $instance->getValue());
+                            date_default_timezone_set($zone);
+                            return false;
+                        },
+                        "time" => function($instance, $report, $schema) {
+                            $zone = @date_default_timezone_get();
+                            date_default_timezone_set('UTC');
+                            if (preg_match('/^(0[0-9]|1[0-9]|2[0-4])' .
+                                           '\:([0-5][0-9])\:([0-5][0-9])$/', $instance->getValue(), $matches)) {
+                                try {
+                                    $a = new \DateTime($instance->getValue());
+                                    if ($a->format('H') == $matches[1] &&
+                                        $a->format('i') == $matches[2] &&
+                                        $a->format('s') == $matches[3]) {
+                                        return true;
+                                    }
+                                } catch (Exception $e) {
+                                }
+                            }
+                            $report->addError($instance, $schema, "time", "Time \"" .
+                                              $instance->getValue() . "\" is not valid [schema path: " .
                                               $instance->getPath() . "]", $instance->getValue());
                             date_default_timezone_set($zone);
                             return false;
                         },
                         "uri" => function ($instance, $report, $schema) {
-                            if (preg_match(JS\URI\Cache::$regex['URI'], $instance->getValue())) {
+                            if (preg_match(JS\URI\Cache::$regex['URI_REF'], $instance->getValue())) {
                                 return true;
                             }
+                            $report->addError($instance, $schema, "uri", "URI \"" .
+                                              $instance->getValue() . "\" is not valid [schema path: " .
+                                              $instance->getPath() . "]", $instance->getValue());
                             return false;
                         }
                     )
