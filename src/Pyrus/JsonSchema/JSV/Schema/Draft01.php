@@ -806,15 +806,17 @@ class Draft01
                     },
                     
                     "validator" => function ($instance, $schema, $self, $report, $parent, $parentSchema, $name) {
-                        if (is_int($instance->getValue())) {
+                        if (is_numeric($instance->getValue())) {
                             $maxDecimal = $schema->getAttribute("maxDecimal");
-                            if (is_numeric($maxDecimal)) {
+                            if (is_int($maxDecimal)) {
                                 $decimals = explode('.', ($instance->getValue() + 0) . '');
                                 if (count($decimals) > 1) {
                                     $decimals = strlen($decimals[1]);
                                     if ($decimals > $maxDecimal) {
                                         $report->addError($instance, $schema, "maxDecimal",
-                                                          "The number of decimal places is greater than the allowed maximum [schema path: " .
+                                                          "The number of decimal places of " .
+                                                          $instance->getValue() . " is greater than the allowed maximum " .
+                                                          $maxDecimal . " [schema path: " .
                                                           $instance->getPath() . "]", $maxDecimal);
                                     }
                                 }
