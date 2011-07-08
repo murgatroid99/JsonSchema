@@ -112,7 +112,12 @@ class JSONInstance
         $this->_uri = $uri;
         $this->_fd = $fd ? $fd : $this->_env->getOption("defaultFragmentDelimiter");
     }
-    
+
+    function __clone()
+    {
+        $this->_value = JSV::dirtyClone($this->_value);
+    }
+
     /**
      * Returns a resolved URI of a provided relative URI against the URI of the instance.
      * 
@@ -134,7 +139,7 @@ class JSONInstance
     
     function getPropertyNames()
     {
-        if ($this->_value === null) {
+        if ($this->_value === null || !is_array($this->_value)) {
             return array();
         }
         return array_keys($this->_value);

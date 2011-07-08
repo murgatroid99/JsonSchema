@@ -893,7 +893,7 @@ class Draft01
                         } else if (is_array($instance->getValue())) { // is_json_array not needed because of previous if
                             $sch = $self->getEnvironment()->findSchema($self->resolveURI("#"));
                             return array_map(function ($instance) use ($sch, $instance) {
-                                return $instance->getEnvironment()->createSchema(instance, $sch);
+                                return $instance->getEnvironment()->createSchema($instance, $sch);
                             }, $instance->getProperties());
                         }
                     },

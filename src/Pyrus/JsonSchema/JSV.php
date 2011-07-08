@@ -401,9 +401,9 @@ class JSV
                 }
             }
             $child = $base;
-            foreach ($extra as $x => $unused) {
+            foreach ($extra as $x => $val) {
                 $b = isset($base[$x]) ? $base[$x] : null;
-                $child[$x] = self::inherits($b, $extra[$x], $extension);
+                $child[$x] = self::inherits($b, $val, $extension);
             }
             return $child;
         } else {
@@ -432,7 +432,7 @@ class JSV
 	
     static function dirtyClone($obj)
     {
-		if ($obj instanceof JSONInstance) {
+		if ($obj instanceof JSONInstance && !($obj instanceof JSONSchema)) {
 			$obj = $obj->getValue();
 		}
         if (!is_object($obj) && !is_array($obj)) {
@@ -440,10 +440,10 @@ class JSV
         }
 		
 		if (is_object($obj)) {
-            if (is_callable($obj)) {
+            if (is_callable($obj) || $obj instanceof \Exception) {
                 return $obj;
             }
-            $obj = get_object_vars($obj);
+            return clone $obj;
         }
         $newObj = array();
         foreach ($obj as $key => $val) {

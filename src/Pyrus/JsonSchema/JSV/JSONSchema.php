@@ -84,6 +84,12 @@ class JSONSchema extends JSONInstance
         }
     }
 
+    function __clone()
+    {
+        $this->_attributes = JSV::dirtyClone($this->_attributes);
+        parent::__clone();
+    }
+
     /**
      * Creates an empty schema.
      * 
