@@ -11,6 +11,9 @@ $test->assertSchemaValidateFail(array('Instance "Oops" is not one of the possibl
                                       '"Jun", "Jul", "Aug", "Sep", "Nov", "Dec" [schema path: #]',
                                       'String is not in the required format [schema path: #]'),
                                 $env->validate('Oops', array('format' => 'http://example.com/months#')), "uri format");
+$test->assertSchemaValidateFail(array('Date-time "2010-13-08T23:15:16Z"is not valid [schema path: #]',
+                                      'String is not in the required format [schema path: #]'),
+                                $env->validate('2010-13-08T23:15:16Z', array('format' => 'date-time')), "date-time");
 
 ?>
 ===DONE===

@@ -708,23 +708,32 @@ class Draft01
                             return true;
                         },
                         "date-time" => function($instance, $report, $schema) {
-                            if (!date_default_timezone_get()) {
-                                date_default_timezone_set('America/Chicago');
-                                $reset = true;
-                            }
-                            if (preg_match('/\\a[0-9]{4}\-(0[1-9]|1[0-2])\-([0-2][1-9]|30|31)T(0[0-9]|1[0-9]|2[0-4])' .
-                                           '(\:[0-5][0-9]){2}Z\\z/', $instance->getValue())) {
+                            $zone = @date_default_timezone_get();
+                            date_default_timezone_set('UTC');
+                            if (preg_match('/^([0-9]{4})\-(0[1-9]|1[0-2])\-(0[1-9]|[1-2][0-9]|30|31)T(0[0-9]|1[0-9]|2[0-4])' .
+                                           '\:([0-5][0-9])\:([0-5][0-9])Z$/', $instance->getValue(), $matches)) {
                                 try {
-                                    $a = new DateTime($instance->getValue());
+                                    $a = new \DateTime($instance->getValue());
+                                    if ($a->format('Y') == $matches[1] &&
+                                        $a->format('m') == $matches[2] &&
+                                        $a->format('d') == $matches[3] &&
+                                        $a->format('H') == $matches[4] &&
+                                        $a->format('i') == $matches[5] &&
+                                        $a->format('s') == $matches[6]) {
+                                        return true;
+                                    }
                                 } catch (Exception $e) {
-                                    
-                                }
-                                if ($reset) {
-                                    date_default_timezone_set('');
                                 }
                             }
-                            if ($reset) {
-                                date_default_timezone_set('');
+                            $report->addError($instance, $schema, "date-time", "Date-time \"" .
+                                              $instance->getValue() . "\"is not valid [schema path: " .
+                                              $instance->getPath() . "]", $instance->getValue());
+                            date_default_timezone_set($zone);
+                            return false;
+                        },
+                        "uri" => function ($instance, $report, $schema) {
+                            if (preg_match(JS\URI\Cache::$regex['URI'], $instance->getValue())) {
+                                return true;
                             }
                             return false;
                         }

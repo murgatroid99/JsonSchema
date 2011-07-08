@@ -8,6 +8,7 @@ $env->createSchema(array('enum' => array('Jan', 'Feb', 'Mar', 'Apr', 'Jun', 'Jul
                                          'Dec')), null, 'http://example.com/months#');
 
 $test->assertSchemaValidate($env->validate('Jan', array('format' => 'http://example.com/months#')), "Jan");
+$test->assertSchemaValidate($env->validate('2010-10-08T23:15:16Z', array('format' => 'date-time')), "date-time");
 ?>
 ===DONE===
 --EXPECT--
