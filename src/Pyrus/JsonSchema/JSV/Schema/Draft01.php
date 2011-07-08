@@ -832,7 +832,7 @@ class Draft01
                     "uniqueItems" => true,
                     
                     "parser" => function ($instance, $self) {
-                        if (is_string($instance->getValue()) || JS\is_json_array($instance->getType())) {
+                        if (is_string($instance->getValue()) || JS\is_json_array($instance->getValue())) {
                             return $instance->getValue();
                         }
                     },
@@ -842,7 +842,7 @@ class Draft01
                         settype($disallowedTypes, 'array');
                         
                         //for instances that are required to be a certain type
-                        if (null !== $instance->getValue() && $disallowedTypes && count($disallowedTypes)) {
+                        if ($disallowedTypes && count($disallowedTypes)) {
                             if ($self->getValueOfProperty("typeValidators")) {
                                 $typeValidators = $self->getValueOfProperty("typeValidators");
                             } else {
@@ -854,7 +854,10 @@ class Draft01
                                 $key = $disallowedTypes[$x];
                                 if (is_callable($typeValidators[$key])) {
                                     if ($typeValidators[$key]($instance, $report)) {
-                                        $report->addError($instance, $schema, "disallow", "Instance is a disallowed type [schema path: " .
+                                        $report->addError($instance, $schema, "disallow", "Instance " .
+                                                          str_replace(array('NULL', 'double'), array('null', 'number'),
+                                                                      gettype($instance->getValue())) . ' is a disallowed type, cannot be ' .
+                                                          "any of: " . implode(", ", $disallowedTypes) . " [schema path: " .
                                                           $instance->getPath() . "]", $disallowedTypes);
                                         return false;
                                     }
