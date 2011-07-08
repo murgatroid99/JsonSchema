@@ -606,7 +606,46 @@ class Draft01
                                         return true;
                                     }
                                 }
-                                $report->addError($instance, $schema, "enum", "Instance is not one of the possible values [schema path: " .
+                                $toString = function ($instance) {
+                                    $v = $instance;
+                                    if ($v instanceof JSONInstance) {
+                                        $v = $v->getValue();
+                                    }
+                                    switch (gettype($v)) {
+                                        case 'string' :
+                                            if (strlen($v) > 20) {
+                                                $v = substr($v, 0, 20) . '...';
+                                            }
+                                            $inst = '"' . $v . '"';
+                                            break;
+                                        case 'integer' :
+                                        case 'double' :
+                                            $inst = $v;
+                                            break;
+                                        case 'boolean' :
+                                            $inst = $v ? 'TRUE' : 'FALSE';
+                                            break;
+                                        case 'null' :
+                                            $inst = 'NULL';
+                                            break;
+                                        case 'array' :
+                                            $inst = '[array:';
+                                            if (is_json_array($v)) {
+                                                $inst .= json_encode($v) . ']';
+                                                break;
+                                            }
+                                        case 'object' :
+                                            $inst = '[object:' . json_encode($v) . ']';
+                                            break;
+                                        default :
+                                            $inst = '[' . gettype($v) . ']';
+                                    }
+                                    return $inst;
+                                };
+                                $enums = array_map($toString, $enums);
+                                $report->addError($instance, $schema, "enum", "Instance " .
+                                                  $toString($instance) . " is not one of the possible values " .
+                                                  implode(', ', $enums) . " [schema path: " .
                                                   $instance->getPath() . "]", $enums);
                             }
                         }
@@ -638,14 +677,24 @@ class Draft01
                             $format = $schema->getAttribute("format");
                             $formatValidators = $self->getValueOfProperty("formatValidators");
                             if (is_string($format) && isset($formatValidators[$format]) &&
-                                is_callable($formatValidators[$format]) && !$formatValidators[$format]($instance, $report)) {
+                                is_callable($formatValidators[$format]) && !$formatValidators[$format]($instance, $report, $schema)) {
                                 $report->addError($instance, $schema, "format", "String is not in the required format [schema path: " .
                                                   $instance->getPath() . "]", $format);
                             }
                         }
                     },
                     
-                    "formatValidators" => array()
+                    "formatValidators" => array(
+                        "regex" => function($instance, $report, $schema) {
+                            if (false === @preg_match('/' . str_replace('/', '\\/', $instance->getValue()) . '/', '')) {
+                                $report->addError($instance, $schema, "regex", "Regex \"" .
+                                                  $instance->getValue() . "\"is not a valid regular expression [schema path: " .
+                                                  $instance->getPath() . "]", $instance->getValue());
+                                return false;
+                            }
+                            return true;
+                        }
+                    )
                 ),
                 
                 "contentEncoding" => array(

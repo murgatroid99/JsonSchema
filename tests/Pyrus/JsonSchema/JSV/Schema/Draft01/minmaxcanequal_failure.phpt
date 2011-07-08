@@ -3,6 +3,15 @@ JsonSchema: minimumCanEqual/maximumCanEqual, schema validation, failure test
 --FILE--
 <?php
 require dirname(__FILE__) . '/setup.php.inc';
+$test->assertSchemaException(array('Property requires sibling property "minimum" [schema path: #.minimumCanEqual]',
+                                   'Property requires sibling property "maximum" [schema path: #.maximumCanEqual]'), function() use ($env) {
+    $env->validate(0, array('minimumCanEqual' => true, 'maximumCanEqual' => true));
+}, "simple");
+$test->assertSchemaException(array('Property requires sibling property "minimum" [schema path: #.minimumCanEqual]',
+                                   'Property requires sibling property "maximum" [schema path: #.maximumCanEqual]'), function() use ($env) {
+    $env->validate(0, array('minimumCanEqual' => false, 'maximumCanEqual' => false));
+}, "simple false");
+
 $test->assertSchemaValidateFail(array('Number is less than the required minimum value [schema path: #]'),
                                 $env->validate(0, array('minimum' => 1, 'maximum' => 10,
                                                         'minimumCanEqual' => true, 'maximumCanEqual' => true)), "0 min 1 max 10");
