@@ -668,6 +668,11 @@ class Draft01
                     
                     "parser" => function ($instance, $self) {
                         if (is_string($instance->getValue())) {
+                            $sch = $instance->getEnvironment()->findSchema($instance->getValue());
+                            if ($sch) {
+                                // format may be a uri to a schema that defines that format
+                                return $sch;
+                            }
                             return $instance->getValue();
                         }
                     },
@@ -680,8 +685,16 @@ class Draft01
                                 is_callable($formatValidators[$format]) && !$formatValidators[$format]($instance, $report, $schema)) {
                                 $report->addError($instance, $schema, "format", "String is not in the required format [schema path: " .
                                                   $instance->getPath() . "]", $format);
+                            } elseif ($format instanceof JSONSchema) {
+                                $errorcount = count($report->errors);
+                                $format->validate($instance, $report, $parent, $parentSchema, $name);
+                                if (count($report->errors) != $errorcount) {
+                                    $report->addError($instance, $schema, "format", "String is not in the required format [schema path: " .
+                                                      $instance->getPath() . "]", $format);
+                                }
                             }
                         }
+
                     },
                     
                     "formatValidators" => array(
@@ -693,6 +706,27 @@ class Draft01
                                 return false;
                             }
                             return true;
+                        },
+                        "date-time" => function($instance, $report, $schema) {
+                            if (!date_default_timezone_get()) {
+                                date_default_timezone_set('America/Chicago');
+                                $reset = true;
+                            }
+                            if (preg_match('/\\a[0-9]{4}\-(0[1-9]|1[0-2])\-([0-2][1-9]|30|31)T(0[0-9]|1[0-9]|2[0-4])' .
+                                           '(\:[0-5][0-9]){2}Z\\z/', $instance->getValue())) {
+                                try {
+                                    $a = new DateTime($instance->getValue());
+                                } catch (Exception $e) {
+                                    
+                                }
+                                if ($reset) {
+                                    date_default_timezone_set('');
+                                }
+                            }
+                            if ($reset) {
+                                date_default_timezone_set('');
+                            }
+                            return false;
                         }
                     )
                 ),
