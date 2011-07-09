@@ -261,13 +261,7 @@ class JSV
      * @param {Any} o The object to add to the array if it is not already there
      * @returns {Array} The provided array for chaining
      */
-    static function pushUnique($arr, $o)
-    {
-        if (!in_array($o, $arr)) {
-            $arr[] = $o;
-        }
-        return $arr;
-    }
+    //pushUnique : pushUnique, use array_unique() after adding to the array
     
     /**
      * Mutates the array by removing the first item that matches the provided value in the array.
@@ -362,7 +356,7 @@ class JSV
     {        
         if ($extra === null) {
             if (is_object($base)) {
-                if (is_callable($base)) {
+                if (is_callable($base) || $base instanceof \Exception) {
                     return $base; // Closure cannot be cloned
                 }
                 return clone $base;
@@ -377,7 +371,7 @@ class JSV
             return $base;
         } else if ($base === null || gettype($base) != gettype($extra)) {
             if (is_object($extra)) {
-                if (is_callable($extra)) {
+                if (is_callable($extra) || $extra instanceof \Exception) {
                     return $extra; // Closure cannot be cloned
                 }
                 return clone $extra;
@@ -467,9 +461,12 @@ class JSV
                 }
                 foreach ($properties as $key => $property) {
                     if (preg_match($pattern, $key)) {
-                        $matchedProperties[$key] = isset($matchedProperties[$key]) ?
-                            JSV::pushUnique($matchedProperties[$key], $patproperty) :
-                            array($patproperty);
+                        if (isset($matchedProperties[$key])) {
+                            $matchedProperties[$key][] = $patproperty;
+                            $matchedProperties[$key] = array_unique($matchedProperties[$key]);
+                        } else {
+                            $matchedProperties[$key] = array($patproperty);
+                        }
                     }
                 }
 			}
