@@ -904,8 +904,8 @@ class Draft01
                             if ($extensions instanceof JSONSchema) {
                                 $extensions->validate($instance, $report, $parent, $parentSchema, $name);
                             } else if (JS\is_json_array($extensions)) {
-                                for ($x = 0, $xl = count($extensions); $x < $xl; ++$x) {
-                                    $extensions[$x]->validate($instance, $report, $parent, $parentSchema, $name);
+                                foreach ($extensions as $extension) {
+                                    $extension->validate($instance, $report, $parent, $parentSchema, $name);
                                 }
                             }
                         }
@@ -929,17 +929,18 @@ class Draft01
                 
                 foreach ($attributeSchemas as $x => $val) {
                     if ($val->getValueOfProperty("validationRequired")) {
-                        $propNames = JSV::pushUnique($propNames, $x);
+                        $propNames[] = $x;
                     }
                 }
+                $propNames = array_unique($propNames);
                 
-                for ($x = 0, $xl = count($propNames); $x < $xl; ++$x) {
-                    if (!isset($attributeSchemas[$propNames[$x]])) {
+                foreach ($propNames as $property) {
+                    if (!isset($attributeSchemas[$property])) {
                         continue;
                     }
-                    $validator = $attributeSchemas[$propNames[$x]]->getValueOfProperty("validator");
+                    $validator = $attributeSchemas[$property]->getValueOfProperty("validator");
                     if (is_callable($validator)) {
-                        $validator($instance, $schema, $attributeSchemas[$propNames[$x]], $report, $parent, $parentSchema, $name);
+                        $validator($instance, $schema, $attributeSchemas[$property], $report, $parent, $parentSchema, $name);
                     }
                 }
             },
