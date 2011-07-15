@@ -39,7 +39,7 @@
 namespace Pyrus\JsonSchema\URI;
 class Options
 {
-    public $tolerant = true,
+    public $tolerant = false,
            $scheme = '',
            $reference = '',
            $defaultFragmentDelimiter = '',
