@@ -180,6 +180,7 @@ class JSONSchema extends JSONInstance
             $schemaProperties = $this->_schema->getProperty("properties");
             $this->_attributes = array();
             foreach ($properties as $key => $val) {
+                $parser = null;
                 if (count($schemaProperties)) {
                     $schemaProperty = $schemaProperties->getProperty($key);
                     if ($schemaProperty) {
@@ -198,7 +199,7 @@ class JSONSchema extends JSONInstance
             }
         }
         
-        return JSV::dirtyClone($this->_attributes);
+        return $this->_attributes;
     }
     
     /**

@@ -355,35 +355,9 @@ class JSV
     static function inherits($base, $extra = null, $extension = false)
     {        
         if ($extra === null) {
-            if (is_object($base)) {
-                if (is_callable($base) || $base instanceof \Exception) {
-                    return $base; // Closure cannot be cloned
-                }
-                return clone $base;
-            }
-            if (is_array($base)) {
-                foreach ($base as $key => $val) {
-                    if (is_object($val) || is_array($val)) {
-                        $base[$key] = self::inherits($val);
-                    }
-                }
-            }
-            return $base;
+            return self::dirtyClone($base);
         } else if ($base === null || gettype($base) != gettype($extra)) {
-            if (is_object($extra)) {
-                if (is_callable($extra) || $extra instanceof \Exception) {
-                    return $extra; // Closure cannot be cloned
-                }
-                return clone $extra;
-            }
-            if (is_array($extra)) {
-                foreach ($extra as $key => $val) {
-                    if (is_object($val) || is_array($val)) {
-                        $extra[$key] = self::inherits($val);
-                    }
-                }
-            }
-            return $extra;
+            return self::dirtyClone($extra);
         } else if (is_json_object($extra)) {
             if ($base instanceof JSONSchema) {
                 $base = $base->getAttributes();
@@ -394,27 +368,14 @@ class JSV
                     $extra["extends"] = array($extra["extends"]);
                 }
             }
-            $child = $base;
+            $child = self::dirtyClone($base);
             foreach ($extra as $x => $val) {
                 $b = isset($base[$x]) ? $base[$x] : null;
                 $child[$x] = self::inherits($b, $val, $extension);
             }
             return $child;
         } else {
-            if (is_object($extra)) {
-                if (is_callable($extra)) {
-                    return $extra; // Closure cannot be cloned
-                }
-                return clone $extra;
-            }
-            if (is_array($extra)) {
-                foreach ($extra as $key => $val) {
-                    if (is_object($val) || is_array($val)) {
-                        $extra[$key] = self::inherits($val);
-                    }
-                }
-            }
-            return $extra;
+            return self::dirtyClone($extra);
         }
     }
 
@@ -426,7 +387,7 @@ class JSV
 	
     static function dirtyClone($obj)
     {
-		if ($obj instanceof JSONInstance && !($obj instanceof JSONSchema)) {
+		if ($obj instanceof JSONInstance) {
 			$obj = $obj->getValue();
 		}
         if (!is_object($obj) && !is_array($obj)) {

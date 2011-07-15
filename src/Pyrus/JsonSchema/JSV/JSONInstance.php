@@ -202,6 +202,9 @@ class JSONInstance
     function getValueOfProperty($key)
     {
         if ($this->_value) {
+            if (!is_array($this->_value)) {
+                throw new Exception('Internal error: value is not an array');
+            }
             if (!isset($this->_value[$key])) {
                 return null;
             }

@@ -892,8 +892,9 @@ class Draft01
                             return $instance->getEnvironment()->createSchema($instance, $self->getEnvironment()->findSchema($self->resolveURI("#")));
                         } else if (is_array($instance->getValue())) { // is_json_array not needed because of previous if
                             $sch = $self->getEnvironment()->findSchema($self->resolveURI("#"));
-                            return array_map(function ($instance) use ($sch, $instance) {
-                                return $instance->getEnvironment()->createSchema($instance, $sch);
+                            $env = $instance->getEnvironment();
+                            return array_map(function ($instance) use ($sch, $env) {
+                                return $env->createSchema($instance, $sch);
                             }, $instance->getProperties());
                         }
                     },
@@ -1122,9 +1123,9 @@ class Draft01
 
     function initializeHyperSchema($uri1 = '', $uri2 = "http://json-schema.org/hyper-schema#")
     {
-        $this->HYPERSCHEMA = $this->ENVIRONMENT->createSchema(JSV::inherits($this->SCHEMA,
-                                                                            $this->ENVIRONMENT->createSchema($this->getHyperSchemaArray(),
-                                                                                                             $this->SCHEMA, $uri1), true), true,
+        $hyperschema = $this->ENVIRONMENT->createSchema($this->getHyperSchemaArray(), $this->SCHEMA, $uri1);
+        $this->HYPERSCHEMA = $this->ENVIRONMENT->createSchema(JSV::inherits($this->SCHEMA, $hyperschema, true),
+                                                              true,
                                                               $uri2);
         
         $this->ENVIRONMENT->setOption("defaultSchemaURI", $uri2);

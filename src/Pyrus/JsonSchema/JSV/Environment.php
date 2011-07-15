@@ -66,7 +66,6 @@ class Environment
     function __clone()
     {
         $this->_options = clone $this->_options;
-        $this->_schemas = JSV::inherits($this->_schemas);
     }
     
     /**
