@@ -27,6 +27,25 @@ $test->assertSchemaException(array('Instance is not a required type: object [sch
                         'test' => 0
                         ));
 }, "link describedby");
+
+
+$schema = $env->createSchema(array(
+                                   "id" => "http://test.example.com/2",
+                                   "properties" => array(
+                                        "two" => array(
+                                            "type" => "object"
+                                            )
+                                        )
+                                  ), null, "http://not.example.com/2");
+
+
+$test->assertSchemaException(array('Instance is not a required type: object [schema path: #.two]'), function() use ($env) {
+    $env->validate(array(),
+                   array(
+                        '$schema' => 'http://not.example.com/2',
+                        'two' => 0
+                        ));
+}, "link describedby");
 ?>
 ===DONE===
 --EXPECT--

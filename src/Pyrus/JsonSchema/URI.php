@@ -345,8 +345,8 @@ class URI
             $components->host = $matches[4];
             $components->port = $matches[5];
             $components->path = $matches[6];
-            $components->query = $matches[7];
-            $components->fragment = $matches[8];
+            $components->query = isset($matches[7]) ? $matches[7] : '';
+            $components->fragment = isset($matches[8]) ? $matches[8] : '';
             
             //fix port number
             if (is_numeric($components->port)) {
