@@ -1077,7 +1077,7 @@ class Draft01
                             $pathStart = $schema->getAttribute("pathStart");
                             if (is_string($pathStart)) {
                                 //TODO: Find out what pathStart is relative to
-                                if ($instance->getURI()->indexOf($pathStart) !== 0) {
+                                if (strpos($instance->getURI(), $pathStart) !== 0) {
                                     $report->addError($instance, $schema, "pathStart", "Instance's URI does not start with " . $pathStart .
                                                       " [schema path: " . $instance->getPath() . "]", $pathStart);
                                 }
