@@ -1028,13 +1028,14 @@ class Draft01
                         }
                         
                         if (isset($arg[1])) {
-                            $links = array_map(function ($link) use ($arg) {
+                            $selfReferenceVariable = $self->getValueOfProperty("selfReferenceVariable");
+                            $links = array_map(function ($link) use ($arg, $selfReferenceVariable) {
                                 $value = null;
                                 $instance = $arg[1];
                                 $href = $link["href"];
-                                $href = preg_replace_callback('/\{(.+)\}/', function ($matches) use ($instance) {
+                                $href = preg_replace_callback('/\{(.+)\}/', function ($matches) use ($instance, $selfReferenceVariable) {
                                     $p1 = $matches[1];
-                                    if ($p1 === "-this") {
+                                    if ($p1 === $selfReferenceVariable) {
                                         $value = $instance->getValue();
                                     } else {
                                         $value = $instance->getValueOfProperty($p1);
@@ -1046,7 +1047,8 @@ class Draft01
                         }
                         
                         return $links;
-                    }
+                    },
+                    "selfReferenceVariable" => "-this"
                 ),
                 
                 "fragmentResolution" => array(

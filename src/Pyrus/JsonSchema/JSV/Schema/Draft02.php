@@ -129,6 +129,7 @@ class Draft02 extends Draft01
     {
         $schema = parent::getHyperSchemaArray();
         $schema['properties']['fragmentResolution']['default'] = 'slash-delimited'; // was dot-delimited
+        return $schema;
     }
 
     function getLinksArray()

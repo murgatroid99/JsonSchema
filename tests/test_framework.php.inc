@@ -2,8 +2,10 @@
 $__e = error_reporting();
 error_reporting(E_ERROR|E_NOTICE|E_WARNING);
 spl_autoload_register($a = function($class) {
-	
-	@include __DIR__ . '/../src/' . str_replace('\\', '/', $class) . '.php';
+	if (!file_exists(__DIR__ . '/../src/' . str_replace('\\', '/', $class) . '.php')) {
+            return false;
+        }
+	include __DIR__ . '/../src/' . str_replace('\\', '/', $class) . '.php';
 	return true;
 });
 @include_once 'Text/Diff.php';

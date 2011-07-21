@@ -469,52 +469,27 @@ class Draft03 extends Draft02
 
     function getHyperSchemaArray()
     {
-        return JSV::inherits($this->draft2->getHyperSchemaArray(), array(
-            '$schema' => "http://json-schema.org/draft-03/hyper-schema#",
-            "id" => "http://json-schema.org/draft-03/hyper-schema#",
-            
-            "properties" => array(
-                "links" => array(
-                    "selfReferenceVariable" => "@"
-                ),
-                
-                "root" => array(
-                    "deprecated" => true
-                ),
-                
-                "contentEncoding" => array(
-                    "deprecated" => false  //moved from core to hyper
-                ),
-                
-                "alternate" => array(
-                    "deprecated" => true
-                )
-            )
-        ));
+        $arr = $this->draft2->getHyperSchemaArray();
+        $arr['$schema'] = "http://json-schema.org/draft-03/hyper-schema#";
+        $arr['id'] = "http://json-schema.org/draft-03/hyper-schema#";
+        $arr['properties']['links']['selfReferenceVariable'] = '@';
+        $arr['properties']['root']['deprecated'] = true;
+        $arr['properties']['contentEncoding']['deprecated'] = false;
+        $arr['properties']['alternate']['deprecated'] = true;
+        return $arr;
     }
 
     function getLinksArray()
     {
-        return JSV::inherits($this->draft2->getLinksArray(), array(
-            '$schema' => "http://json-schema.org/draft-03/hyper-schema#",
-            "id" => "http://json-schema.org/draft-03/links#",
-            
-            "properties" => array(
-                "href" => array(
-                    "required" => true,
-                    "format" => "link-description-object-template"
-                ),
-                
-                "rel" => array(
-                    "required" => true
-                ),
-                
-                "properties" => array(
-                    "deprecated" => true
-                ),
-                
-                "schema" => array('$ref' => "http://json-schema.org/draft-03/hyper-schema#")
-            )
-        ));
+        $arr = $this->draft2->getLinksArray();
+        $arr['$schema'] = "http://json-schema.org/draft-03/hyper-schema#";
+        $arr['id'] = "http://json-schema.org/draft-03/links#";
+        
+        $arr['properties']['href']['required'] = true;
+        $arr['properties']['format'] = 'link-description-object-template';
+        $arr['properties']['rel']['required'] = true;
+        $arr['properties']['properties']['deprecated'] = true;
+        $arr['schema']['$ref'] = "http://json-schema.org/draft-03/hyper-schema#";
+        return $arr;
     }
 }

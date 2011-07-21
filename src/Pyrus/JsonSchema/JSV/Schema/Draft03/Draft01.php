@@ -40,7 +40,7 @@ namespace Pyrus\JsonSchema\JSV\Schema\Draft03;
 
 use Pyrus\JsonSchema\JSV\Exception, Pyrus\JsonSchema\JSV\ValidationException, Pyrus\JsonSchema\JSV\JSONInstance, Pyrus\JsonSchema\JSV\JSONSchema,
     Pyrus\JsonSchema\JSV\Report, Pyrus\JsonSchema\JSV\URI, Pyrus\JsonSchema\JSV\EnvironmentOptions, Pyrus\JsonSchema\JSV\Environment,
-    Pyrus\JsonSchema\JSV, Pyrus\JsonSchema as JS;
+    Pyrus\JsonSchema\JSV, Pyrus\JsonSchema as JS, Pyrus\JsonSchema\JSV\Schema;
 
 class Draft01 extends Schema\Draft01
 {

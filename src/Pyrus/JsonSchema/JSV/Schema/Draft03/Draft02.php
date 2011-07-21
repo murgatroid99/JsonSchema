@@ -40,7 +40,7 @@ namespace Pyrus\JsonSchema\JSV\Schema\Draft03;
 
 use Pyrus\JsonSchema\JSV\Exception, Pyrus\JsonSchema\JSV\ValidationException, Pyrus\JsonSchema\JSV\JSONInstance, Pyrus\JsonSchema\JSV\JSONSchema,
     Pyrus\JsonSchema\JSV\Report, Pyrus\JsonSchema\JSV\URI, Pyrus\JsonSchema\JSV\EnvironmentOptions, Pyrus\JsonSchema\JSV\Environment,
-    Pyrus\JsonSchema\JSV, Pyrus\JsonSchema as JS;
+    Pyrus\JsonSchema\JSV, Pyrus\JsonSchema as JS, Pyrus\JsonSchema\JSV\Schema;
 
 class Draft02 extends Schema\Draft02
 {
@@ -84,6 +84,7 @@ class Draft02 extends Schema\Draft02
         $schema = parent::getHyperSchemaArray();
         $schema['$schema'] = "http://json-schema.org/draft-02/hyper-schema#";
         $schema['id'] = "http://json-schema.org/draft-02/hyper-schema#";
+        return $schema;
     }
 
     function getLinksArray()
