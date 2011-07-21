@@ -46,6 +46,17 @@ $test->assertSchemaException(array('Instance is not a required type: object [sch
                         'two' => 0
                         ));
 }, "link describedby");
+
+$schema = $env->createSchema(array(
+                            "links" => array(
+                                array(
+                                      "rel" => "bar",
+                                      "href" => "http:{nonexisting}#"
+                                     )
+                                )
+                            ));
+$instance = $env->createInstance("foo");
+$test->assertEquals("http:#", $schema->getLink("bar", $instance), "'nonexisting' link to unknown value");
 ?>
 ===DONE===
 --EXPECT--

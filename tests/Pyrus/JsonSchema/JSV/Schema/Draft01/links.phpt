@@ -48,18 +48,6 @@ $instance = $env->createInstance("foo");
 $test->assertEquals("http:foo#", $schema->getLink("bar", $instance), "'bar' link and self reference");
 
 
-$schema = $env->createSchema(array(
-                            "links" => array(
-                                array(
-                                      "rel" => "bar",
-                                      "href" => "http:{@}#"
-                                     )
-                                )
-                            ));
-$instance = $env->createInstance("foo");
-$test->assertEquals("http:foo#", $schema->getLink("bar", $instance), "'bar' link and self reference @");
-
-
 ?>
 ===DONE===
 --EXPECT--
