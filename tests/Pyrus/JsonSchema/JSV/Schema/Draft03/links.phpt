@@ -48,6 +48,17 @@ $instance = $env->createInstance("foo");
 $test->assertEquals("http:foo#", $schema->getLink("bar", $instance), "'bar' link and self reference @");
 
 
+$schema = $env->createSchema(array(
+                            "links" => array(
+                                array(
+                                      "rel" => "bar",
+                                      "href" => "http:{nonexisting}#"
+                                     )
+                                )
+                            ));
+$instance = $env->createInstance("foo");
+$test->assertEquals("http:#", $schema->getLink("bar", $instance), "'nonexisting' link to unknown value");
+
 ?>
 ===DONE===
 --EXPECT--
