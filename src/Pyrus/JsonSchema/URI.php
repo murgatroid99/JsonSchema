@@ -393,11 +393,11 @@ class URI
         $uriTokens = array();
         
         if ($components->userinfo || $components->host || is_int($components->port)) {
-            if ($components->userinfo !== "") {
+            if ($components->userinfo) {
                 $uriTokens[] = preg_replace_callback(static::$regex['NOT_USERINFO'], array($this, 'pctEncChar'), $components->userinfo);
                 $uriTokens[] = "@";
             }
-            if ($components->host !== "") {
+            if ($components->host) {
                 $uriTokens[] = preg_replace_callback(static::$regex['NOT_HOST'], array($this, 'pctEncChar'), strtolower($components->host));
             }
             if (is_int($components->port)) {
@@ -564,12 +564,16 @@ class URI
                     if ($relative->path[0] === "/") {
                         $target->path = $this->removeDotSegments($relative->path);
                     } else {
-                        if ($base->authority !== null && !$base->path) {
+                        if ($base->authority && !$base->path) {
                             $target->path = "/" . $relative->path;
                         } else if (!$base->path) {
                             $target->path = $relative->path;
                         } else {
-                            $target->path = substr($base->path, 0, strrpos($base->path, "/") + 1) . $relative->path;
+                            if (strpos($base->path, '/')) {
+                                $target->path = substr($base->path, 0, strrpos($base->path, "/") + 1) . $relative->path;
+                            } else {
+                                $target->path = $relative->path;
+                            }
                         }
                         $target->path = $this->removeDotSegments($target->path);
                     }

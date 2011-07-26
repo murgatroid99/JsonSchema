@@ -102,7 +102,7 @@ class JSONInstance
         
         if (!$uri) {
             $uri = "urn:uuid:" . JSV::randomUUID() . "#";
-        } elseif (strpos($uri, ":") === -1) {
+        } elseif (strpos($uri, ":") === false) {
             $urimanager = new URI();
             $uri = JSV::formatURI($urimanager->resolve("urn:uuid:" . JSV::randomUUID() . "#", $uri));
         }

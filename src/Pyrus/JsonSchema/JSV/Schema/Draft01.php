@@ -172,7 +172,7 @@ class Draft01
                             }
                             
                             //ensure that type matches for at least one of the required types
-                            for ($x = 0, $xl = count($requiredTypes); $x < $xl; ++$x) {
+                            foreach ($requiredTypes as $x => $type) {
                                 $type = $requiredTypes[$x];
                                 if ($type instanceof JSONSchema) {
                                     $subreport = clone $report;
@@ -292,8 +292,8 @@ class Draft01
                                 } else {
                                     $itemSchema = $additionalProperties;
                                 }
-                                for ($x = 0, $xl = count($properties); $x < $xl; ++$x) {
-                                    $itemSchema->validate($properties[$x], $report, $instance, $schema, $x);
+                                foreach ($properties as $x => $property) {
+                                    $itemSchema->validate($property, $report, $instance, $schema, $x);
                                 }
                             }
                         }
@@ -601,8 +601,8 @@ class Draft01
                         if (null !== $instance->getValue()) {
                             $enums = $schema->getAttribute("enum");
                             if ($enums) {
-                                for ($x = 0, $xl = count($enums); $x < $xl; ++$x) {
-                                    if ($instance->equals($enums[$x])) {
+                                foreach ($enums as $enum) {
+                                    if ($instance->equals($enum)) {
                                         return true;
                                     }
                                 }
