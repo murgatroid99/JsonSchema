@@ -1,5 +1,5 @@
 <?php
-$env->createSchema(array(
+$addressbook = $env->createSchema(array(
                      "type"=> "object",
                      "id"=> "http://example.com/addressbook.json",
                      "description"=> "AddressBook example from http://relaxng.org/compact-tutorial-20030326.html",
@@ -25,7 +25,7 @@ $env->createSchema(array(
 
 
 // The referral target schema, with a canonical id.
-$env->createSchema(array(
+$card = $env->createSchema(array(
                      "type"=> "array",
                      "id"=> "http://example.com/subdir/card.json",
                      "description"=> "Referral target",
@@ -41,7 +41,7 @@ $env->createSchema(array(
 
 
 // Similar example, using $ref to factor part of the schema.
-$env->createSchema(array(
+$addressbookref = $env->createSchema(array(
                      "type"=> "object",
                      "id"=> "http://example.com/addressbook_ref.json",
                      "description"=> 'Similar example, using $ref to factor part of the schema.',
@@ -61,7 +61,7 @@ $env->createSchema(array(
 
 
 // Similar example, using extends to factor part of the schema.
-$env->createSchema(array(
+$addressbookextends = $env->createSchema(array(
                      "type"=> "object",
                      "id"=> "http://example.com/addressbook_extends.json",
                      "description"=> "Similar example, using extends to factor part of the schema.",
