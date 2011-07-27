@@ -336,7 +336,7 @@ class JSV
      */
     static function formatURI($uri)
     {
-        if ($uri && $uri[strlen($uri)-1] != '#') {
+        if ($uri && !strpos($uri, '#') && $uri[strlen($uri)-1] != '#') {
             $uri .= '#';
         }
         return $uri;

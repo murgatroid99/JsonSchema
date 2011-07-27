@@ -334,7 +334,7 @@ class URI
             if (!$options->tolerant) {
                 $components->errors->E_ERROR[] = new Exception("URI is not strictly valid.");
             }
-            $test = preg_match(self::URI_PARSE, $uriString, $matches);
+            $test = preg_match(self::$regex['URI_PARSE'], $uriString, $matches);
         }
         
         if ($test) {

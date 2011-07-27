@@ -13,12 +13,12 @@ $addressbook = $env->createSchema(array(
                                  ),
                                  "minItems"=> 2,
                                  "maxItems"=> 2,
-                                 '$schema'=>"http://json-schema.org/draft-03/schema#"
+                                 '$schema'=>"http://json-schema.org/draft-03/hyper-schema#"
                              ),
                              "required"=> true
                          )
                      ),
-                     '$schema'=>"http://json-schema.org/draft-03/schema#"
+                     '$schema'=>"http://json-schema.org/draft-03/hyper-schema#"
                  ),
                  null,
                  "http://example.com/addressbook.json");
@@ -34,7 +34,7 @@ $card = $env->createSchema(array(
                      ),
                      "minItems"=> 2,
                      "maxItems"=> 2,
-                     '$schema'=>"http://json-schema.org/draft-03/schema#"
+                     '$schema'=>"http://json-schema.org/draft-03/hyper-schema#"
                  ),
                  null,
                  "http://example.com/subdir/card.json");
@@ -54,7 +54,7 @@ $addressbookref = $env->createSchema(array(
                              "required"=> true
                          )
                      ),
-                     '$schema'=>"http://json-schema.org/draft-03/schema#"
+                     '$schema'=>"http://json-schema.org/draft-03/hyper-schema#"
                  ),
                  null,
                  "http://example.com/addressbook_ref.json");
@@ -76,7 +76,7 @@ $addressbookextends = $env->createSchema(array(
                              "required"=> true
                          )
                      ),
-                     '$schema'=>"http://json-schema.org/draft-03/schema#"
+                     '$schema'=>"http://json-schema.org/draft-03/hyper-schema#"
                  ),
                  null,
                  "http://example.com/addressbook_extends.json");
