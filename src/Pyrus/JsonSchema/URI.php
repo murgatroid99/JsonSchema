@@ -241,6 +241,7 @@ class URI
     {
         $newStr = "";
         $i = 0;
+        $str = $str[0];
  
         while ($i < strlen($str)) {
             $c = hexdec(substr($str, $i + 1, 2));
@@ -569,7 +570,7 @@ class URI
                         } else if (!$base->path) {
                             $target->path = $relative->path;
                         } else {
-                            if (strpos($base->path, '/')) {
+                            if (strpos($base->path, '/') !== false) {
                                 $target->path = substr($base->path, 0, strrpos($base->path, "/") + 1) . $relative->path;
                             } else {
                                 $target->path = $relative->path;
