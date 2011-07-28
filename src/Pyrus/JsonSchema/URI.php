@@ -225,7 +225,7 @@ class URI
     function pctEncChar($matches)
     {
         $chr = $matches[0];
-        $c = $this->utfCharToNumber(dechex($chr[0]));
+        $c = $this->utfCharToNumber($chr);
 
         if ($c < 128) {
             return "%" . strtoupper(dechex($c));
