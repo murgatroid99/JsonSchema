@@ -13,7 +13,7 @@ for ($d = 32; $d < 128; ++$d) {
             $output .= "%" . strtoupper(dechex($d));
         }
 }
-$input .= urldecode("%C3%80%E3%82%A2");
+$input .= "\xc0\000\xa2\x30";
 $output .= "%C3%80%E3%82%A2";
 
 $test->assertEquals($output, $uri->escapeComponent($input), 'test');
