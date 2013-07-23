@@ -84,7 +84,7 @@ function is_json_array($i)
 class JSV
 {
     static protected $_environments = array();
-    static protected $_defaultEnvironmentID = "";
+    static protected $_defaultEnvironmentID = "json-schema-draft-04";
 
     /**
      * Creates and returns a new {@link Environment} that is a clone of the environment registered with the provided ID.
@@ -104,14 +104,15 @@ class JSV
         
         if (!isset(static::$_environments[$id])) {
             switch ($id) { // lazy load
-                case 'json-schema-draft-03' :
-                case 'json-schema-draft-02' :
-                case 'json-schema-draft-01' :
-                    $class = __NAMESPACE__ . '\JSV\Schema\\' . ucfirst(str_replace(array('json-schema-', '-'), '', $id));
-                    new $class;
-                    break;
-                default:
-                    throw new Exception("Unknown Environment ID: $id");
+            case 'json-schema-draft-04':
+            case 'json-schema-draft-03' :
+            case 'json-schema-draft-02' :
+            case 'json-schema-draft-01' :
+              $class = __NAMESPACE__ . '\JSV\Schema\\' . ucfirst(str_replace(array('json-schema-', '-'), '', $id));
+              new $class;
+              break;
+            default:
+              throw new Exception("Unknown Environment ID: $id");
             }
         }
         //else
