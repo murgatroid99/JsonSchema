@@ -18,11 +18,8 @@ use Pyrus\JsonSchema\JSV\Exception, Pyrus\JsonSchema\JSV\ValidationException,
   Pyrus\JsonSchema\JSV, Pyrus\JsonSchema as JS;
 
 class Draft04 extends Draft03{
-  var $draft3;
 
   function __costruct($register = true){
-    $this->draft1 = new Draft03();
-
     return parent::__construct($register);
   }
 
@@ -82,7 +79,7 @@ class Draft04 extends Draft03{
   }
 
   function getSchemaArray(){
-    $SCHEMA_03_JSON = $this->draft3->getSchemaArray();
+    $SCHEMA_03_JSON = parent::getSchemaArray();
     $propertiesparser = $SCHEMA_03_JSON["properties"]["properties"]["parser"];
     $extendsparser = $SCHEMA_03_JSON["properties"]["extends"]["parser"];
 
@@ -184,7 +181,7 @@ class Draft04 extends Draft03{
                         'oneOf' =>
                         array('type' => 'array',
                               'default' => array(),
-                              'minItems' => 1
+                              'minItems' => 1,
                               'parser' => $extendsparser,
                               'validator' =>
                               function ($instance, $schema, $self, $report, $parent, $parentSchema, $name){
@@ -212,7 +209,7 @@ class Draft04 extends Draft03{
                         'not' =>
                         array('type' => 'array',
                               'default' => array(),
-                              'minItems' => 1
+                              'minItems' => 1,
                               'parser' => $extendsparser,
                               'validator' =>
                               function ($instance, $schema, $self, $report, $parent, $parentSchema, $name){
@@ -234,27 +231,27 @@ class Draft04 extends Draft03{
 
     function getHyperSchemaArray()
     {
-        $arr = $this->draft3->getHyperSchemaArray();
-        $arr['$schema'] = "http://json-schema.org/draft-04/hyper-schema#";
-        $arr['id'] = "http://json-schema.org/draft-04/hyper-schema#";
-        $arr['properties']['links']['selfReferenceVariable'] = '@';
-        $arr['properties']['root']['deprecated'] = true;
-        $arr['properties']['contentEncoding']['deprecated'] = false;
-        $arr['properties']['alternate']['deprecated'] = true;
-        return $arr;
+      $arr = parent::getHyperSchemaArray();
+      $arr['$schema'] = "http://json-schema.org/draft-04/hyper-schema#";
+      $arr['id'] = "http://json-schema.org/draft-04/hyper-schema#";
+      $arr['properties']['links']['selfReferenceVariable'] = '@';
+      $arr['properties']['root']['deprecated'] = true;
+      $arr['properties']['contentEncoding']['deprecated'] = false;
+      $arr['properties']['alternate']['deprecated'] = true;
+      return $arr;
     }
 
     function getLinksArray()
     {
-        $arr = $this->draft2->getLinksArray();
-        $arr['$schema'] = "http://json-schema.org/draft-04/hyper-schema#";
-        $arr['id'] = "http://json-schema.org/draft-04/links#";
+      $arr = parent::getLinksArray();
+      $arr['$schema'] = "http://json-schema.org/draft-04/hyper-schema#";
+      $arr['id'] = "http://json-schema.org/draft-04/links#";
         
-        $arr['properties']['href']['required'] = true;
-        $arr['properties']['format'] = 'link-description-object-template';
-        $arr['properties']['rel']['required'] = true;
-        $arr['properties']['properties']['deprecated'] = true;
-        $arr['schema']['$ref'] = "http://json-schema.org/draft-04/hyper-schema#";
-        return $arr;
+      $arr['properties']['href']['required'] = true;
+      $arr['properties']['format'] = 'link-description-object-template';
+      $arr['properties']['rel']['required'] = true;
+      $arr['properties']['properties']['deprecated'] = true;
+      $arr['schema']['$ref'] = "http://json-schema.org/draft-04/hyper-schema#";
+      return $arr;
     }
 }

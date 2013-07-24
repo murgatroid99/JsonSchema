@@ -109,7 +109,7 @@ class JSV
             case 'json-schema-draft-02' :
             case 'json-schema-draft-01' :
               $class = __NAMESPACE__ . '\JSV\Schema\\' . ucfirst(str_replace(array('json-schema-', '-'), '', $id));
-              new $class;
+              return new $class;
               break;
             default:
               throw new Exception("Unknown Environment ID: $id");
