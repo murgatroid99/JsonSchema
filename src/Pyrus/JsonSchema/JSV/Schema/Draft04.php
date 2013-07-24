@@ -96,7 +96,7 @@ class Draft04 extends Draft03{
                                   if(is_numeric($multipleOf) && $instance->getValue() % $multipleOf !== 0){
                                     $report->addError($instance, $schema, "multipleOf",
                                                       "Number is not a multiple of the required multiple value" .
-                                                      " [schema path: $instance->getPath()]", $minimum);
+                                                      " [schema path: " . $instance->getPath() . "]", $minimum);
                                   }
                                 }
                               }),
@@ -109,7 +109,7 @@ class Draft04 extends Draft03{
                                 if(is_int($maxProperties) && count($instance->getValue()) > $maxProperties){
                                   $report->addError($instance, $schema, "maxProperties",
                                                     "Object has more than the required maximum properties" .
-                                                    " [schema path: $instance->getPath()]", $maxProperties);
+                                                    " [schema path: " . $instance->getPath() . "]", $maxProperties);
                                 }
                               }),
                         'minProperties' =>
@@ -121,7 +121,7 @@ class Draft04 extends Draft03{
                                 if(is_int($minProperties) && count($instance->getValue()) > $maxProperties){
                                   $report->addError($instance, $schema, "minProperties",
                                                     "Object has fewer than the required minimum properties" .
-                                                    " [schema path: $instance->getPath()]", $minProperties);
+                                                    " [schema path: " . $instance->getPath() . "]", $minProperties);
                                 }
                               }),
                         'required' =>
@@ -135,7 +135,7 @@ class Draft04 extends Draft03{
                                     if($instance->getProperty($req) === null){
                                       $report->addError($instance, $schema, "required",
                                                         "Required property \"$req\" not provided" .
-                                                        " [schema path: $instance->getPath()]", $required);
+                                                        " [schema path: " . $instance->getPath() . "]", $required);
                                     }
                                   }
                                 }
@@ -169,13 +169,13 @@ class Draft04 extends Draft03{
                                   foreach($subschemas as $subschema){
                                     $temp_report = new Report();
                                     $subschema->validate($instance, $temp_report, $parent, $parentSchema, $name);
-                                    if(empty($temp_report->errors)){
+                                    if(!count($temp_report->errors)){
                                       return;
                                     }
                                   }
                                   $report->addError($instance, $schema, "anyOf",
                                                     "Object did not match any element of the 'anyOf' array" .
-                                                    " [schema path: $instance->getPath()]", $subschemas);
+                                                    " [schema path: " . $instance->getPath() . "]", $subschemas);
                                 }
                               }),
                         'oneOf' =>
@@ -187,23 +187,33 @@ class Draft04 extends Draft03{
                               function ($instance, $schema, $self, $report, $parent, $parentSchema, $name){
                                 $subschemas = $schema->getAttribute("oneOf");
                                 if(JS\is_json_array($subschemas)){
+                                  $temp_full_report = new Report();
                                   $found = false;
                                   foreach($subschemas as $subschema){
                                     $temp_report = new Report();
                                     $subschema->validate($instance, $temp_report, $parent, $parentSchema, $name);
-                                    if(empty($temp_report->errors)){
+                                    if(!count($temp_report->errors)){
                                       if($found){
                                         $report->addError($instance, $schema, "oneOf",
                                                           "Object matched more than one element of the 'oneOf' array" .
-                                                          " [schema path: $instance->getPath()", $subschemas);
+                                                          " [schema path: " . $instance->getPath() . "]", $subschemas);
+                                        return;
                                       } else {
                                         $found = true;
                                       }
+                                    } else {
+                                      $temp_full_report->errors = array_merge($temp_full_report->errors,
+                                                                              $temp_report->errors);
                                     }
                                   }
-                                  $report->addError($instance, $schema, "oneOf",
-                                                    "Object did not match any element of the 'oneOf' array" .
-                                                    " [schema path: $instance->getPath()]", $subschemas);
+                                  if(!$found){
+                                    $report->addError($instance, $schema, "oneOf",
+                                                      "Object did not match any element of the 'oneOf' array" .
+                                                      " [schema path: " . $instance->getPath() . "]", $subschemas);
+                                    $report->errors = array_merge($report->errors,
+                                                                  $temp_full_report->errors);
+                                  }
+                                                                
                                 }
                               }),
                         'not' =>
@@ -218,10 +228,10 @@ class Draft04 extends Draft03{
                                   foreach($subschemas as $subschema){
                                     $temp_report = new Report();
                                     $subschema->validate($instance, $temp_report, $parent, $parentSchema, $name);
-                                    if(empty($temp_report->errors)){
+                                    if(!count($temp_report->errors)){
                                       $report->addError($instance, $schema, "oneOf",
                                                         "Object matched an element of the 'not' array" .
-                                                        " [schema path: $instance->getPath()", $subschemas);
+                                                        " [schema path: " . $instance->getPath() . "", $subschemas);
                                     }
                                   }
                                 }
