@@ -70,7 +70,7 @@ class Draft04 extends Draft03{
     //
         
     $this->ENVIRONMENT->setOption("defaultFragmentDelimiter", "/");
-    JSV::registerEnvironment("json-schema-draft-03", $this->ENVIRONMENT);
+    JSV::registerEnvironment("json-schema-draft-04", $this->ENVIRONMENT);
     if (!JSV::getDefaultEnvironmentID() || JSV::getDefaultEnvironmentID() === "json-schema-draft-01"
         || JSV::getDefaultEnvironmentID() === "json-schema-draft-02"
         || JSV::getDefaultEnvironmentID() === "json-schema-draft-03") {
