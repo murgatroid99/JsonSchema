@@ -96,7 +96,7 @@ class JSV
      * @return class JsonSchema\Environment environment object
      */
     
-    static function createEnvironment($id)
+    static function createEnvironment($id=NULL)
     {
         if (!$id) {
             $id = static::$_defaultEnvironmentID;
